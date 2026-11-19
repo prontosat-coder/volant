@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VolAnt · Excluir a sua conta</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --fundo:#0E1B2E; --cartao:#16263D; --linha:#24364F; --azul:#3D9BFF; --link:#8CC4FF;
+          --texto:#F2F6FB; --texto2:#C5D2E3; --texto3:#9FB0C6; --vermelho:#FF5A5A; --verde:#2FD27A; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--fundo); color:var(--texto); font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:440px; margin:0 auto; padding:32px 22px 48px; }
+  .marca { display:flex; align-items:center; gap:10px; font-weight:700; font-size:22px; margin-bottom:26px; }
+  .marca span { width:30px; height:30px; border-radius:50%; background:var(--azul); display:inline-block; }
+  h1 { font-size:26px; margin:0 0 6px; }
+  p { color:var(--texto2); margin:0 0 16px; }
+  label { display:block; font-size:13px; color:var(--texto3); margin:0 0 6px; }
+  input { width:100%; height:50px; border-radius:14px; border:2px solid var(--linha); background:var(--cartao);
+          color:var(--texto); font-size:16px; padding:0 16px; margin-bottom:14px; outline:none; }
+  input:focus { border-color:var(--link); }
+  button { width:100%; height:50px; border-radius:16px; border:2px solid var(--azul); background:var(--azul);
+           color:var(--fundo); font-weight:700; font-size:15px; cursor:pointer; }
+  button[disabled] { opacity:.5; cursor:default; }
+  button.perigo { background:var(--vermelho); border-color:var(--vermelho); }
+  button.leve { background:transparent; color:var(--texto); border-color:var(--linha); margin-top:8px; }
+  a, .link { color:var(--link); font-weight:600; background:none; border:0; padding:12px 0; width:auto; height:auto; font-size:14px; cursor:pointer; }
+  .erro { color:var(--vermelho); font-weight:600; font-size:14px; min-height:20px; margin:4px 0 10px; }
+  .ok { color:var(--verde); }
+  h2 { font-size:15px; margin:28px 0 4px; }
+  ul { list-style:none; padding:0; margin:0; }
+  li { color:var(--texto2); font-size:14px; padding:6px 0 6px 22px; position:relative; }
+  li::before { content:"•"; color:var(--link); position:absolute; left:6px; }
+  .cartao { background:var(--cartao); border-radius:20px; padding:18px; margin-bottom:16px; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="marca"><span></span>VolAnt</div>
+
+  <!-- 1) entrar -->
+  <section id="passo-entrar">
+    <h1>Excluir a sua conta</h1>
+    <p>Sem o aplicativo? Entre aqui com o mesmo e-mail e senha do VolAnt.</p>
+    <form id="form-entrar">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password" required>
+      <div class="erro" id="erro-entrar"></div>
+      <button type="submit" id="botao-entrar">Entrar</button>
+    </form>
+    <button class="link" id="esqueci">Esqueci a senha: entrar com um código no e-mail</button>
+  </section>
+
+  <!-- 1b) codigo por e-mail -->
+  <section id="passo-codigo" hidden>
+    <h1>Código no e-mail</h1>
+    <p id="codigo-texto">Mandamos um código de 6 números.</p>
+    <form id="form-codigo">
+      <label for="codigo">Código</label>
+      <input id="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+      <div class="erro" id="erro-codigo"></div>
+      <button type="submit" id="botao-codigo">Confirmar</button>
+    </form>
+  </section>
+
+  <!-- 2) confirmar -->
+  <section id="passo-confirmar" hidden>
+    <h1>Excluir para sempre?</h1>
+    <div class="cartao">
+      <p style="margin:0">Conta: <strong id="quem"></strong></p>
+    </div>
+    <p>Não dá para desfazer. Os seus amigos deixam de ver você na hora. Se você assina o VolAnt Pro,
+       cancele no Google Play: a exclusão não cancela a cobrança.</p>
+    <label for="confirma">Para confirmar, digite EXCLUIR</label>
+    <input id="confirma" autocomplete="off" autocapitalize="characters">
+    <div class="erro" id="erro-excluir"></div>
+    <button class="perigo" id="botao-excluir" disabled>Excluir para sempre</button>
+    <button class="leve" id="botao-cancelar">Não excluir</button>
+  </section>
+
+  <!-- 3) pronto -->
+  <section id="passo-pronto" hidden>
+    <h1 class="ok">Conta excluída</h1>
+    <p>Pronto. Para apagar também o que ficou no celular (corridas, carro, gravações), desinstale o aplicativo.</p>
+  </section>
+
+  <h2>O que é apagado</h2>
+  <ul>
+    <li>Conta, nome de usuário, amigos, expedições, conversas e alertas: na hora.</li>
+    <li>Registros de assinatura: guardados só o tempo que a lei exige.</li>
+    <li>Fica só um código embaralhado do e-mail e do celular, para o teste grátis não recomeçar.</li>
+    <li>O nome de usuário fica guardado por 30 dias antes de ficar livre, para ninguém se passar por você.</li>
+    <li>Dados que ficam só no celular: apague desinstalando o app.</li>
+  </ul>
+  <p style="margin-top:22px"><a href="../privacidade/">Política de privacidade</a></p>
+</main>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+  const s = createClient('https://hcmpksakeaknjmqbbmjp.supabase.co',
+                         'sb_publishable_BAfygJ01KLoApRODYIOjtg_jf6L0vee',
+                         { auth: { persistSession: false } });
+  const $ = (id) => document.getElementById(id);
+  const mostrar = (id) => {
+    for (const p of ['passo-entrar', 'passo-codigo', 'passo-confirmar', 'passo-pronto']) $(p).hidden = p !== id;
+  };
+  const frase = (e) => {
+    const m = `${e?.code ?? ''} ${e?.message ?? ''}`.toLowerCase();
+    if (m.includes('invalid_credentials') || m.includes('invalid login')) return 'E-mail ou senha não conferem.';
+    if (m.includes('expired') || m.includes('token')) return 'Código errado ou vencido.';
+    if (m.includes('rate') || m.includes('429') || m.includes('security')) return 'Muitas tentativas. Espere um minuto.';
+    if (m.includes('signups not allowed') || m.includes('otp_disabled') || m.includes('not found')) return 'Não achei conta com esse e-mail.';
+    return 'Não deu certo agora. Confira a internet e tente de novo.';
+  };
+  async function entrou() {
+    const { data } = await s.auth.getUser();
+    let nome = '';
+    try { const r = await s.rpc('meu_nome'); nome = r.data?.nome ? `@${r.data.nome} · ` : ''; } catch (_) {}
+    $('quem').textContent = `${nome}${data.user?.email ?? ''}`;
+    mostrar('passo-confirmar');
+  }
+  $('form-entrar').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    $('erro-entrar').textContent = '';
+    $('botao-entrar').disabled = true;
+    const { error } = await s.auth.signInWithPassword({ email: $('email').value.trim().toLowerCase(), password: $('senha').value });
+    $('botao-entrar').disabled = false;
+    if (error) { $('erro-entrar').textContent = frase(error); return; }
+    await entrou();
+  });
+  $('esqueci').addEventListener('click', async () => {
+    const email = $('email').value.trim().toLowerCase();
+    if (!email) { $('erro-entrar').textContent = 'Escreva o seu e-mail primeiro.'; return; }
+    const { error } = await s.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+    if (error) { $('erro-entrar').textContent = frase(error); return; }
+    $('codigo-texto').textContent = `Mandamos um código de 6 números para ${email}.`;
+    mostrar('passo-codigo');
+  });
+  $('form-codigo').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    $('botao-codigo').disabled = true;
+    const { error } = await s.auth.verifyOtp({ email: $('email').value.trim().toLowerCase(), token: $('codigo').value.trim(), type: 'email' });
+    $('botao-codigo').disabled = false;
+    if (error) { $('erro-codigo').textContent = frase(error); return; }
+    await entrou();
+  });
+  $('confirma').addEventListener('input', () => {
+    $('botao-excluir').disabled = $('confirma').value.trim().toUpperCase() !== 'EXCLUIR';
+  });
+  $('botao-cancelar').addEventListener('click', async () => {
+    await s.auth.signOut({ scope: 'local' });
+    $('confirma').value = '';
+    mostrar('passo-entrar');
+  });
+  $('botao-excluir').addEventListener('click', async () => {
+    $('botao-excluir').disabled = true;
+    const { error } = await s.rpc('excluir_minha_conta');
+    if (error) { $('erro-excluir').textContent = frase(error); $('botao-excluir').disabled = false; return; }
+    await s.auth.signOut({ scope: 'local' });
+    mostrar('passo-pronto');
+  });
+</script>
+</body>
+</html>
