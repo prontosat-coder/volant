@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VolAnt · Excluir a sua conta</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <meta name="robots" content="noindex">
 <style>
   :root { --fundo:#0E1B2E; --cartao:#16263D; --linha:#24364F; --azul:#3D9BFF; --link:#8CC4FF;
@@ -37,7 +39,7 @@
 </head>
 <body>
 <main>
-  <div class="marca"><span></span>VolAnt</div>
+  <a class="marca" href="../index.html" style="text-decoration:none;color:inherit"><img src="../img/simbolo.svg" alt="" style="width:32px;height:32px">VolAnt</a>
 
   <!-- 1) entrar -->
   <section id="passo-entrar">
@@ -95,73 +97,9 @@
     <li>O nome de usuário fica guardado por 30 dias antes de ficar livre, para ninguém se passar por você.</li>
     <li>Dados que ficam só no celular: apague desinstalando o app.</li>
   </ul>
-  <p style="margin-top:22px"><a href="../privacidade/">Política de privacidade</a></p>
+  <p style="margin-top:22px"><a href="../privacidade/index.html">Política de privacidade</a></p>
 </main>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-  const s = createClient('https://hcmpksakeaknjmqbbmjp.supabase.co',
-                         'sb_publishable_BAfygJ01KLoApRODYIOjtg_jf6L0vee',
-                         { auth: { persistSession: false } });
-  const $ = (id) => document.getElementById(id);
-  const mostrar = (id) => {
-    for (const p of ['passo-entrar', 'passo-codigo', 'passo-confirmar', 'passo-pronto']) $(p).hidden = p !== id;
-  };
-  const frase = (e) => {
-    const m = `${e?.code ?? ''} ${e?.message ?? ''}`.toLowerCase();
-    if (m.includes('invalid_credentials') || m.includes('invalid login')) return 'E-mail ou senha não conferem.';
-    if (m.includes('expired') || m.includes('token')) return 'Código errado ou vencido.';
-    if (m.includes('rate') || m.includes('429') || m.includes('security')) return 'Muitas tentativas. Espere um minuto.';
-    if (m.includes('signups not allowed') || m.includes('otp_disabled') || m.includes('not found')) return 'Não achei conta com esse e-mail.';
-    return 'Não deu certo agora. Confira a internet e tente de novo.';
-  };
-  async function entrou() {
-    const { data } = await s.auth.getUser();
-    let nome = '';
-    try { const r = await s.rpc('meu_nome'); nome = r.data?.nome ? `@${r.data.nome} · ` : ''; } catch (_) {}
-    $('quem').textContent = `${nome}${data.user?.email ?? ''}`;
-    mostrar('passo-confirmar');
-  }
-  $('form-entrar').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    $('erro-entrar').textContent = '';
-    $('botao-entrar').disabled = true;
-    const { error } = await s.auth.signInWithPassword({ email: $('email').value.trim().toLowerCase(), password: $('senha').value });
-    $('botao-entrar').disabled = false;
-    if (error) { $('erro-entrar').textContent = frase(error); return; }
-    await entrou();
-  });
-  $('esqueci').addEventListener('click', async () => {
-    const email = $('email').value.trim().toLowerCase();
-    if (!email) { $('erro-entrar').textContent = 'Escreva o seu e-mail primeiro.'; return; }
-    const { error } = await s.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-    if (error) { $('erro-entrar').textContent = frase(error); return; }
-    $('codigo-texto').textContent = `Mandamos um código de 6 números para ${email}.`;
-    mostrar('passo-codigo');
-  });
-  $('form-codigo').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    $('botao-codigo').disabled = true;
-    const { error } = await s.auth.verifyOtp({ email: $('email').value.trim().toLowerCase(), token: $('codigo').value.trim(), type: 'email' });
-    $('botao-codigo').disabled = false;
-    if (error) { $('erro-codigo').textContent = frase(error); return; }
-    await entrou();
-  });
-  $('confirma').addEventListener('input', () => {
-    $('botao-excluir').disabled = $('confirma').value.trim().toUpperCase() !== 'EXCLUIR';
-  });
-  $('botao-cancelar').addEventListener('click', async () => {
-    await s.auth.signOut({ scope: 'local' });
-    $('confirma').value = '';
-    mostrar('passo-entrar');
-  });
-  $('botao-excluir').addEventListener('click', async () => {
-    $('botao-excluir').disabled = true;
-    const { error } = await s.rpc('excluir_minha_conta');
-    if (error) { $('erro-excluir').textContent = frase(error); $('botao-excluir').disabled = false; return; }
-    await s.auth.signOut({ scope: 'local' });
-    mostrar('passo-pronto');
-  });
-</script>
+<script type="module">import{createClient}from"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";const s=createClient("https://hcmpksakeaknjmqbbmjp.supabase.co","sb_publishable_BAfygJ01KLoApRODYIOjtg_jf6L0vee",{auth:{persistSession:!1}}),$=e=>document.getElementById(e),mostrar=e=>{for(const t of["passo-entrar","passo-codigo","passo-confirmar","passo-pronto"])$(t).hidden=t!==e},frase=e=>{const t=`${e?.code??""} ${e?.message??""}`.toLowerCase();return t.includes("invalid_credentials")||t.includes("invalid login")?"E-mail ou senha não conferem.":t.includes("expired")||t.includes("token")?"Código errado ou vencido.":t.includes("rate")||t.includes("429")||t.includes("security")?"Muitas tentativas. Espere um minuto.":t.includes("signups not allowed")||t.includes("otp_disabled")||t.includes("not found")?"Não achei conta com esse e-mail.":"Não deu certo agora. Confira a internet e tente de novo."};async function entrou(){const{data:e}=await s.auth.getUser();let t="";try{const e=await s.rpc("meu_nome");t=e.data?.nome?`@${e.data.nome} · `:""}catch(e){}$("quem").textContent=`${t}${e.user?.email??""}`,mostrar("passo-confirmar")}$("form-entrar").addEventListener("submit",async e=>{e.preventDefault(),$("erro-entrar").textContent="",$("botao-entrar").disabled=!0;const{error:t}=await s.auth.signInWithPassword({email:$("email").value.trim().toLowerCase(),password:$("senha").value});$("botao-entrar").disabled=!1,t?$("erro-entrar").textContent=frase(t):await entrou()}),$("esqueci").addEventListener("click",async()=>{const e=$("email").value.trim().toLowerCase();if(!e)return void($("erro-entrar").textContent="Escreva o seu e-mail primeiro.");const{error:t}=await s.auth.signInWithOtp({email:e,options:{shouldCreateUser:!1}});t?$("erro-entrar").textContent=frase(t):($("codigo-texto").textContent=`Mandamos um código de 6 números para ${e}.`,mostrar("passo-codigo"))}),$("form-codigo").addEventListener("submit",async e=>{e.preventDefault(),$("botao-codigo").disabled=!0;const{error:t}=await s.auth.verifyOtp({email:$("email").value.trim().toLowerCase(),token:$("codigo").value.trim(),type:"email"});$("botao-codigo").disabled=!1,t?$("erro-codigo").textContent=frase(t):await entrou()}),$("confirma").addEventListener("input",()=>{$("botao-excluir").disabled="EXCLUIR"!==$("confirma").value.trim().toUpperCase()}),$("botao-cancelar").addEventListener("click",async()=>{await s.auth.signOut({scope:"local"}),$("confirma").value="",mostrar("passo-entrar")}),$("botao-excluir").addEventListener("click",async()=>{$("botao-excluir").disabled=!0;const{error:e}=await s.rpc("excluir_minha_conta");if(e)return $("erro-excluir").textContent=frase(e),void($("botao-excluir").disabled=!1);await s.auth.signOut({scope:"local"}),mostrar("passo-pronto")});</script>
 </body>
 </html>

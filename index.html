@@ -3,24 +3,502 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VolAnt</title>
+<title>VolAnt · O app do motorista de aplicativo</title>
+<meta name="description" content="Veja na hora se a corrida compensa, acompanhe lucro e metas e rode junto com os amigos, com pedido de ajuda e palavra de segurança. Android e iPhone.">
+<meta name="theme-color" content="#0E1B2E">
+<meta property="og:title" content="VolAnt · O app do motorista de aplicativo">
+<meta property="og:description" content="Não é rodar mais. É rodar certo. Corridas, metas e segurança com os amigos.">
+<meta property="og:image" content="https://prontosat-coder.github.io/volant/img/compartilhar.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>document.documentElement.classList.add("js");</script>
 <style>
-  body { margin:0; background:#0E1B2E; color:#F2F6FB; font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  main { max-width:480px; margin:0 auto; padding:48px 22px; }
-  .marca { display:flex; align-items:center; gap:10px; font-weight:700; font-size:26px; margin-bottom:14px; }
-  .marca span { width:34px; height:34px; border-radius:50%; background:#3D9BFF; display:inline-block; }
-  p { color:#C5D2E3; }
-  a { display:block; background:#16263D; color:#F2F6FB; text-decoration:none; font-weight:700; border-radius:16px; padding:16px 18px; margin:10px 0; }
-  a small { display:block; font-weight:400; color:#9FB0C6; }
+  @font-face { font-family: "Space Grotesk"; src: url(fontes/SpaceGrotesk-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+  @font-face { font-family: Inter; src: url(fontes/Inter-400.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: Inter; src: url(fontes/Inter-600.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: Inter; src: url(fontes/Inter-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+  :root { --fundo:#0E1B2E; --cartao:#16263D; --linha:#24364F; --azul:#3D9BFF; --link:#8CC4FF;
+          --texto:#F2F6FB; --texto2:#C5D2E3; --texto3:#9FB0C6;
+          --verde:#2FD27A; --amarelo:#FFC83D; --laranja:#FF9A3D; --vermelho:#FF5A5A; --dourado:#FFD24A; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 17px/1.55 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+  .faixa { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+  h1, h2, h3 { font-family: "Space Grotesk", Inter, sans-serif; letter-spacing: -.02em; margin: 0; }
+  h1 { font-size: clamp(34px, 6.4vw, 62px); line-height: 1.04; }
+  h1 .linha { display: block; white-space: nowrap; }
+  h2 { font-size: clamp(30px, 4.6vw, 46px); line-height: 1.06; }
+  h3 { font-size: 21px; line-height: 1.2; }
+  .destaque { color: var(--azul); }
+  .verde { color: var(--verde); }
+  p { color: var(--texto2); margin: 0; }
+
+  /* topo */
+  header { position: sticky; top: 0; z-index: 10; background: rgba(14,27,46,.86); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(36,54,79,.6); }
+  header .faixa { display: flex; align-items: center; gap: 22px; height: 68px; }
+  header .logo img { height: 34px; }
+  header nav { margin-left: auto; display: flex; gap: 22px; font-weight: 600; font-size: 15px; color: var(--texto2); }
+  header nav a { text-decoration: none; }
+  header nav a:hover { color: var(--texto); }
+  .botao { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; border-radius: 16px; padding: 15px 22px; transition: transform .15s, background .15s; }
+  .botao:active { transform: scale(.97); }
+  .botao.azul { background: var(--azul); color: #06213F; }
+  .botao.azul:hover { background: #5AAEFF; }
+  .botao.contorno { border: 2px solid var(--linha); color: var(--texto); background: rgba(22,38,61,.6); }
+  .botao.contorno:hover { border-color: var(--azul); }
+  .botao small { display: block; font-weight: 600; font-size: 12px; opacity: .8; line-height: 1.1; }
+  .botao .duas { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+  .botao.em-breve { cursor: default; } .botao.azul.em-breve:hover { background: var(--azul); } .botao.contorno.em-breve:hover { border-color: var(--linha); } .botao.em-breve:active { transform: none; }
+  header .botao { padding: 10px 16px; font-size: 15px; border-radius: 12px; }
+
+  /* abertura */
+  .abertura { position: relative; overflow: hidden; padding: 64px 0 40px;
+    background: radial-gradient(900px 600px at 78% 60%, rgba(61,155,255,.28), transparent 70%); }
+  .abertura .faixa { display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; }
+  .abertura p.sub { font-size: 20px; margin: 22px 0 30px; max-width: 520px; }
+  .lojas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .nota { margin-top: 16px; font-size: 14px; color: var(--texto3); }
+  .celulares { position: relative; height: 620px; }
+  .cel { position: absolute; width: 270px; border-radius: 40px; padding: 8px; background: #1E3350; box-shadow: inset 0 0 0 2px #2E4A70, 0 30px 90px rgba(0,0,0,.5); }
+  .cel img { border-radius: 33px; }
+  .celulares .um { left: 8%; top: 40px; transform: rotate(-5deg); }
+  .celulares .dois { left: 46%; top: 0; transform: rotate(4deg); }
+
+  section { padding: 84px 0; }
+  .titulo-secao { max-width: 680px; margin-bottom: 40px; }
+  .titulo-secao p { font-size: 19px; margin-top: 14px; }
+  .etiqueta { display: inline-block; font: 700 13px Inter; letter-spacing: .08em; text-transform: uppercase; color: var(--link); margin-bottom: 12px; }
+
+  /* corrida */
+  .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  .tela { max-width: 330px; margin: 0 auto; border-radius: 44px; padding: 9px; background: #1E3350; box-shadow: inset 0 0 0 2px #2E4A70, 0 30px 80px rgba(0,0,0,.45); }
+  .tela img { border-radius: 36px; }
+  .niveis { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; }
+  .nivel { display: flex; gap: 14px; align-items: center; background: var(--cartao); border: 1px solid var(--linha); border-radius: 16px; padding: 14px 16px; }
+  .nivel i { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  .nivel b { font-family: "Space Grotesk"; font-size: 18px; }
+  .nivel span { color: var(--texto3); font-size: 15px; display: block; }
+
+  /* cartoes */
+  .cartoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .cartao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 22px; padding: 24px; }
+  .cartao .icone { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 16px; font-size: 22px; }
+  .cartao p { margin-top: 8px; font-size: 16px; }
+  .cartao.com-tela { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .cartao.com-tela .texto { padding: 24px 24px 0; }
+  .cartao.com-tela .recorte { margin: 22px 22px 0; height: 260px; overflow: hidden; border-radius: 24px 24px 0 0; border: 6px solid #1E3350; border-bottom: 0; }
+  .cartao.com-tela .recorte { position: relative; }
+  .cartao.com-tela .recorte img { width: 100%; }
+  .cartao.com-tela .recorte img.baixo { position: absolute; left: 0; bottom: 0; }
+
+  /* seguranca */
+  .seguranca { background: linear-gradient(180deg, #0E1B2E 0%, #122640 50%, #0E1B2E 100%); }
+  .lista-seg { display: grid; gap: 14px; }
+  .item-seg { display: flex; gap: 16px; background: var(--cartao); border: 1px solid var(--linha); border-radius: 18px; padding: 18px; }
+  .item-seg .bolinha { width: 42px; height: 42px; border-radius: 12px; flex: none; display: grid; place-items: center; font-size: 20px; }
+  .item-seg p { font-size: 15.5px; margin-top: 4px; }
+
+  /* passos */
+  .passos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: passo; }
+  .passo { background: var(--cartao); border: 1px solid var(--linha); border-radius: 22px; padding: 26px; }
+  .passo::before { counter-increment: passo; content: counter(passo); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--azul); color: #06213F; font: 700 19px "Space Grotesk"; margin-bottom: 16px; }
+
+  /* perguntas */
+  details { background: var(--cartao); border: 1px solid var(--linha); border-radius: 18px; padding: 0 20px; margin-bottom: 12px; }
+  summary { cursor: pointer; list-style: none; padding: 20px 0; font-weight: 700; font-size: 17px; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--azul); font-size: 22px; line-height: 1; }
+  details[open] summary::after { content: "–"; }
+  details p { padding-bottom: 20px; font-size: 16px; }
+
+  /* chamada final */
+  .chamada { text-align: center; padding: 90px 0 100px; background: radial-gradient(700px 400px at 50% 100%, rgba(61,155,255,.25), transparent 70%); }
+  .chamada img.simbolo { width: 110px; margin: 0 auto 26px; filter: drop-shadow(0 18px 40px rgba(61,155,255,.4)); }
+  .chamada .lojas { justify-content: center; margin-top: 30px; }
+
+  footer { border-top: 1px solid var(--linha); padding: 34px 0 44px; font-size: 15px; color: var(--texto3); }
+  footer .faixa { display: flex; flex-wrap: wrap; gap: 18px 30px; align-items: center; }
+  footer img { height: 28px; }
+  footer nav { display: flex; flex-wrap: wrap; gap: 18px; margin-left: auto; }
+  footer nav a { color: var(--texto2); text-decoration: none; }
+  footer nav a:hover { color: var(--texto); }
+
+  @media (max-width: 900px) {
+    header nav { display: none; }
+    header .botao { margin-left: auto; }
+    .abertura { padding-top: 40px; }
+    .abertura .faixa, .duas-colunas { grid-template-columns: 1fr; }
+    .celulares { height: 470px; max-width: 420px; margin: 0 auto; width: 100%; }
+    .cel { width: 210px; border-radius: 32px; padding: 6px; }
+    .cel img { border-radius: 27px; }
+    .celulares .um { left: 2%; }
+    .celulares .dois { left: auto; right: 2%; }
+    .cartoes, .passos { grid-template-columns: 1fr; }
+    section { padding: 64px 0; }
+    .ordem-tela { order: -1; }
+  }
+  /* ---------------- formigueiro: movimento ---------------- */
+  .js .surge { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); transition-delay: var(--atraso, 0s); }
+  .js .surge.visivel { opacity: 1; transform: none; }
+  /* telas: abrem como um tunel do formigueiro, de baixo para cima */
+  .js .tela.surge, .js .cel.surge { opacity: 1; transform: none; clip-path: circle(0% at 50% 100%); transition: clip-path 1s cubic-bezier(.2,.7,.2,1); transition-delay: var(--atraso, 0s); }
+  .js .tela.surge.visivel, .js .cel.surge.visivel { clip-path: circle(150% at 50% 100%); }
+  .js .celulares .um.surge { transform: rotate(-5deg); } .js .celulares .dois.surge { transform: rotate(4deg); }
+
+  /* trilha no topo: a formiga anda conforme a pagina desce */
+  .trilha-topo { position: absolute; left: 0; right: 0; bottom: -7px; height: 14px; pointer-events: none; }
+  .trilha-topo .pontos { position: absolute; inset: 0; background: radial-gradient(circle, rgba(140,196,255,.28) 1.6px, transparent 2.1px) 0 50% / 12px 14px repeat-x; }
+  .trilha-topo .cheios { right: auto; width: var(--p, 0%); background-image: radial-gradient(circle, #3D9BFF 1.9px, transparent 2.4px); }
+  .trilha-topo .guia { position: absolute; top: -8px; left: calc(var(--p, 0%) - 13px); width: 26px; height: 26px; transition: left .12s linear; }
+  .trilha-topo .guia svg { width: 26px; height: 26px; transition: transform .25s; }
+  .trilha-topo .guia.volta svg { transform: scaleX(-1); }
+  .trilha-topo .guia .pb { opacity: 0; }
+  .trilha-topo .guia.anda .pa { animation: passoA .32s steps(1) infinite; }
+  .trilha-topo .guia.anda .pb { animation: passoB .32s steps(1) infinite; }
+  @keyframes passoA { 0% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes passoB { 0% { opacity: 0; } 50% { opacity: 1; } }
+  .trilha-topo .toca { position: absolute; right: 6px; top: -9px; width: 26px; height: 26px; opacity: .55; transition: opacity .3s, transform .3s; }
+  .trilha-topo .toca.chegou { opacity: 1; transform: scale(1.18); }
+
+  /* formigas carregando folhas no fundo da abertura */
+  .abertura .fundo-trilhas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  /* botoes: uma formiguinha espia por cima */
+  .lojas .botao, .chamada .botao { position: relative; }
+  .lojas .botao::before, .chamada .botao::before { content: ""; position: absolute; top: -17px; right: 20px; width: 24px; height: 24px; opacity: 0; transform: translateY(10px) rotate(-8deg); transition: opacity .25s, transform .3s cubic-bezier(.3,1.6,.5,1); pointer-events: none;
+    background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%238CC4FF' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M14 22l-3 6M16.5 22.5v6M19 22l3 6'/%3E%3Cellipse cx='9' cy='20' rx='5.5' ry='4' fill='%238CC4FF'/%3E%3Cellipse cx='16.5' cy='20' rx='3' ry='2.6' fill='%238CC4FF'/%3E%3Ccircle cx='23' cy='18.5' r='3.2' fill='%238CC4FF'/%3E%3Cpath d='M24.5 16q2-4 5-4M22.5 15.5q0-4 3-5.5'/%3E%3C/svg%3E"); }
+  .lojas .botao:hover::before, .lojas .botao:focus-visible::before, .chamada .botao:hover::before, .chamada .botao:focus-visible::before { opacity: 1; transform: none; }
+  header nav a { position: relative; }
+  header nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 4px; background: radial-gradient(circle, var(--azul) 1.4px, transparent 1.8px) 0 50% / 8px 4px repeat-x; transform: scaleX(0); transform-origin: left; transition: transform .35s ease; }
+  header nav a:hover::after { transform: scaleX(1); }
+
+  /* teste a formiga */
+  .teste { background: radial-gradient(800px 480px at 25% 50%, rgba(47,210,122,.10), transparent 70%); }
+  .calc { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 26px; }
+  .calc label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--texto3); }
+  .calc label small { font-weight: 400; }
+  .campo { display: flex; align-items: center; background: var(--cartao); border: 2px solid var(--linha); border-radius: 14px; padding: 0 12px; transition: border-color .2s, box-shadow .2s; }
+  .campo:focus-within { border-color: var(--azul); box-shadow: 0 0 0 4px rgba(61,155,255,.18); }
+  .campo i { font-style: normal; color: var(--texto3); font-weight: 600; font-size: 15px; }
+  .campo input { width: 100%; min-width: 0; background: none; border: 0; outline: 0; color: var(--texto); font: 700 22px "Space Grotesk", Inter, sans-serif; padding: 12px 6px; }
+  .atalhos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .atalhos button { display: inline-flex; align-items: center; gap: 7px; background: rgba(22,38,61,.7); border: 1px solid var(--linha); color: var(--texto2); border-radius: 999px; padding: 7px 12px; font: 600 13.5px Inter; cursor: pointer; transition: border-color .2s, transform .15s; }
+  .atalhos button i { width: 9px; height: 9px; border-radius: 50%; }
+  .atalhos button:hover { border-color: var(--azul); } .atalhos button:active { transform: scale(.96); }
+  .resultado { position: relative; }
+  .res { --cor: var(--verde); position: relative; overflow: hidden; background: var(--cartao); border: 2px solid color-mix(in srgb, var(--cor) 55%, var(--linha)); border-radius: 30px; padding: 30px 28px 26px; text-align: center; transition: border-color .4s; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+  .res::before { content: ""; position: absolute; inset: 0; background: radial-gradient(420px 240px at 50% 0%, color-mix(in srgb, var(--cor) 26%, transparent), transparent 72%); transition: background .4s; }
+  .res > * { position: relative; }
+  .res .palco { height: 150px; display: grid; place-items: center; }
+  .res .palco svg { width: 150px; height: 150px; overflow: visible; }
+  .res .palco svg.chega { animation: chega .7s cubic-bezier(.2,.8,.3,1.2); }
+  .res .palco svg.treme { animation: treme .5s ease; }
+  .res .palco .folha { transform-box: view-box; transform-origin: 15px 12px; animation: cresce .6s cubic-bezier(.3,1.6,.5,1) .15s both; }
+  @keyframes chega { 0% { transform: translateX(-60px) scale(.9); opacity: 0; } 60% { transform: translateX(6px) scale(1.04); opacity: 1; } 100% { transform: none; } }
+  @keyframes treme { 0%, 100% { transform: none; } 20% { transform: translateX(-6px) rotate(-3deg); } 40% { transform: translateX(5px) rotate(2deg); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+  @keyframes cresce { from { transform: scale(0) rotate(-20deg); } to { transform: none; } }
+  .res .titulo { font: 700 32px "Space Grotesk", Inter, sans-serif; color: var(--cor); letter-spacing: -.02em; transition: color .3s; }
+  .res .frase { font-size: 18px; color: var(--texto); font-weight: 600; margin-top: 4px; }
+  .res .numeros { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .res .numeros span { background: rgba(14,27,46,.6); border: 1px solid var(--linha); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: var(--texto2); }
+  .res .numeros b { color: var(--texto); }
+  .regua { margin: 22px auto 0; max-width: 340px; text-align: left; }
+  .regua .trilho { position: relative; height: 10px; border-radius: 999px; background: linear-gradient(90deg, rgba(255,90,90,.35) 0 33%, rgba(255,154,61,.35) 33% 50%, rgba(255,200,61,.35) 50% 56%, rgba(47,210,122,.35) 56% 100%); }
+  .regua .marca { position: absolute; top: -5px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: var(--cor); border: 3px solid var(--cartao); left: var(--x, 50%); transition: left .6s cubic-bezier(.2,.8,.3,1.1), background .3s; }
+  .regua .minimo { position: absolute; top: -4px; left: 50%; width: 2px; height: 18px; background: var(--texto2); border-radius: 2px; }
+  .regua .legenda { display: flex; justify-content: space-between; font-size: 12px; color: var(--texto3); margin-top: 8px; }
+  .niveis .nivel { transition: transform .2s, border-color .2s; } .niveis .nivel:hover { transform: translateX(4px); border-color: var(--azul); }
+
+  /* perguntas: uma formiguinha atravessa quando abre */
+  details { position: relative; overflow: hidden; }
+  details .passante { position: absolute; top: 4px; left: -30px; width: 20px; height: 20px; animation: atravessa 1.6s linear forwards; pointer-events: none; }
+  @keyframes atravessa { to { left: calc(100% + 30px); } }
+  details p { animation: abre .35s ease; }
+  @keyframes abre { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .chamada svg.formigueiro { width: 130px; height: 130px; margin: 0 auto 24px; display: block; filter: drop-shadow(0 18px 40px rgba(61,155,255,.4)); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .js .surge { opacity: 1; transform: none; clip-path: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* formigueiro do canto (porta do minigame) */
+  .canto { position: fixed; right: 12px; bottom: 8px; z-index: 9; width: 176px; height: 136px; display: block; transition: transform .45s cubic-bezier(.3,1.4,.5,1), opacity .3s; -webkit-tap-highlight-color: transparent; }
+  .canto svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 10px 22px rgba(0,0,0,.45)); transform-origin: 76% 90%; }
+  .canto-rotulo { position: absolute; right: 8px; top: -10px; background: var(--azul); color: #06213F; font: 600 13px Inter; padding: 7px 12px; border-radius: 999px; white-space: nowrap; opacity: 0; transform: translateY(8px) scale(.94); transition: opacity .25s, transform .3s cubic-bezier(.3,1.5,.5,1); box-shadow: 0 8px 20px rgba(0,0,0,.3); pointer-events: none; }
+  .canto-rotulo::after { content: ""; position: absolute; right: 34px; bottom: -5px; width: 10px; height: 10px; background: var(--azul); transform: rotate(45deg); border-radius: 2px; }
+  .canto-rotulo b { font-weight: 800; }
+  .canto:hover, .canto:focus-visible { transform: translateY(-5px); outline: none; }
+  .canto:hover .canto-rotulo, .canto:focus-visible .canto-rotulo, .canto.dica .canto-rotulo { opacity: 1; transform: none; }
+  .canto:focus-visible svg { filter: drop-shadow(0 0 0 #3D9BFF) drop-shadow(0 0 10px rgba(61,155,255,.8)); }
+  .canto.entrando svg { animation: entraToca .42s cubic-bezier(.5,0,.6,1.3) forwards; }
+  @keyframes entraToca { 35% { transform: scale(1.08, .9); } 100% { transform: scale(.82) translateY(6px); opacity: .5; } }
+  .canto.rolando, .canto.perto-do-fim { transform: translateY(130%); opacity: 0; pointer-events: none; }
+  @media (max-width: 1240px) { .canto { width: 136px; height: 106px; } }
+  @media (max-width: 760px) {
+    .canto { width: 96px; height: 74px; right: 2px; bottom: 6px; }
+    .canto.na-abertura { transform: translateY(130%); opacity: 0; pointer-events: none; }
+    .canto-rotulo { font-size: 12px; padding: 6px 10px; top: -22px; right: 6px; }
+    .canto-rotulo::after { right: 26px; }
+  }
+  [id] { scroll-margin-top: 92px; }
+  @media (max-width: 760px) {
+    .abertura .fundo-trilhas { -webkit-mask-image: linear-gradient(180deg, #000 0, rgba(0,0,0,.16) 14%, rgba(0,0,0,.16) 56%, #000 70%); mask-image: linear-gradient(180deg, #000 0, rgba(0,0,0,.16) 14%, rgba(0,0,0,.16) 56%, #000 70%); }
+  }
+
+  /* vitrine do jogo */
+  .vitrine { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; background: linear-gradient(135deg, #16263D, #10213A); border: 1px solid var(--linha); border-radius: 30px; padding: 40px; position: relative; overflow: hidden; }
+  .vitrine::after { content: ""; position: absolute; right: -80px; bottom: -120px; width: 420px; height: 420px; background: radial-gradient(circle, rgba(255,210,74,.16), transparent 65%); pointer-events: none; }
+  .vitrine .regras { display: grid; gap: 10px; margin: 22px 0 26px; }
+  .vitrine .regras div { display: flex; gap: 12px; align-items: center; color: var(--texto2); font-size: 16px; }
+  .vitrine .regras i { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-style: normal; font-weight: 800; flex: none; }
+  .placar { background: rgba(14,27,46,.7); border: 1px solid var(--linha); border-radius: 22px; padding: 18px; position: relative; z-index: 1; }
+  .placar h3 { font-size: 17px; display: flex; justify-content: space-between; align-items: baseline; }
+  .placar h3 small { font: 600 12px Inter; color: var(--texto3); }
+  .placar ol { list-style: none; padding: 0; margin: 12px 0 0; }
+  .placar li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--linha); font-size: 15px; color: var(--texto2); }
+  .placar li:first-child { border-top: 0; }
+  .placar li b { color: var(--texto); font-variant-numeric: tabular-nums; }
+  .placar li .pos { font: 700 14px "Space Grotesk"; color: var(--texto3); text-align: center; }
+  .placar li:nth-child(1) .pos { color: var(--dourado); } .placar li:nth-child(2) .pos { color: #D6E1EE; } .placar li:nth-child(3) .pos { color: #E0A46A; }
+  .placar .exemplo { font-size: 12px; color: var(--texto3); margin-top: 10px; }
+  @media (max-width: 900px) { .vitrine { grid-template-columns: 1fr; padding: 26px 20px; } .calc { grid-template-columns: 1fr 1fr; } .calc label:last-child { grid-column: span 2; } }
+
 </style>
 </head>
 <body>
-<main>
-  <div class="marca"><span></span>VolAnt</div>
-  <p>O app dos motoristas de aplicativo: corridas, metas e segurança com os amigos da expedição.</p>
-  <a href="privacidade/">Política de privacidade<small>O que fica no celular e o que vai para o servidor</small></a>
-  <a href="excluir-conta/">Excluir a sua conta<small>Sem precisar do aplicativo</small></a>
-  <a href="mailto:volant.suporte@gmail.com">Fale com a gente<small>volant.suporte@gmail.com</small></a>
-</main>
+
+<header>
+  <div class="faixa">
+    <a class="logo" href="#" aria-label="VolAnt"><img src="img/logo.svg" alt="VolAnt"></a>
+    <nav>
+      <a href="#corrida">A corrida compensa?</a>
+      <a href="#funcoes">Funções</a>
+      <a href="#seguranca">Segurança</a>
+      <a href="#jogo">Jogo</a>
+      <a href="#perguntas">Perguntas</a>
+    </nav>
+    <a class="botao azul" href="#baixar">Baixar</a>
+  </div>
+</header>
+
+<div class="abertura">
+  <div class="faixa">
+    <div>
+      <span class="etiqueta">O app do motorista de aplicativo</span>
+      <h1><span class="linha">Não é rodar mais.</span><span class="linha">É rodar <span class="destaque">certo.</span></span></h1>
+      <p class="sub">Veja na hora se a corrida compensa, acompanhe o lucro de verdade e rode junto com os seus amigos, com ajuda a um toque.</p>
+      <div class="lojas" id="baixar">
+        <span class="botao azul em-breve" aria-disabled="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h10a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H7Zm3 14h4v1.5h-4V18Z"/></svg>
+          <span class="duas"><small>Em breve para</small>Android</span>
+        </span>
+        <span class="botao contorno em-breve" aria-disabled="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h10a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H7Zm3 14h4v1.5h-4V18Z"/></svg>
+          <span class="duas"><small>Em breve para</small>iPhone</span>
+        </span>
+      </div>
+      <p class="nota">Comece grátis · Sem anúncios</p>
+    </div>
+    <div class="celulares" aria-hidden="true">
+      <div class="cel um"><img src="img/expedicao.webp" alt=""></div>
+      <div class="cel dois"><img src="img/lucro.webp" alt=""></div>
+    </div>
+  </div>
+</div>
+
+<section id="corrida">
+  <div class="faixa duas-colunas">
+    <div class="tela ordem-tela"><img src="img/corrida.webp" alt="Tela que mostra se a corrida vale a pena" loading="lazy"></div>
+    <div>
+      <span class="etiqueta">Sua formiga calcula</span>
+      <h2>A corrida <span class="verde">compensa?</span></h2>
+      <p style="font-size:19px;margin-top:14px">Tocou a corrida? Fale ou digite o valor e a distância. O VolAnt compara com o custo real do seu carro e responde na hora.</p>
+      <div class="niveis">
+        <div class="nivel"><i style="background:var(--verde)"></i><div><b>Vale a pena</b><span>Paga o custo e chega na sua meta</span></div></div>
+        <div class="nivel"><i style="background:var(--amarelo)"></i><div><b>No limite</b><span>Paga a meta, mas por pouco</span></div></div>
+        <div class="nivel"><i style="background:var(--laranja)"></i><div><b>Abaixo da meta</b><span>Paga o custo, mas rende menos do que você quer</span></div></div>
+        <div class="nivel"><i style="background:var(--vermelho)"></i><div><b>Não cobre o custo</b><span>Você pagaria para rodar</span></div></div>
+      </div>
+      <p class="nota" style="margin-top:20px">No Android, a sua formiga fica por cima do app da corrida. No iPhone, segure o ícone do VolAnt e toque em “Calcular corrida”.</p>
+    </div>
+  </div>
+</section>
+
+<section id="teste" class="teste">
+  <div class="faixa duas-colunas">
+    <div>
+      <span class="etiqueta">Teste agora</span>
+      <h2>Pergunte para a <span class="destaque">formiga</span></h2>
+      <p style="font-size:19px;margin-top:14px">Digite o valor e a distância de uma corrida. A formiga responde na hora, com a mesma conta do app.</p>
+      <form class="calc" onsubmit="return false">
+        <label>Valor da corrida<span class="campo"><i>R$</i><input id="cValor" inputmode="decimal" value="22" aria-label="Valor da corrida em reais"></span></label>
+        <label>Distância<span class="campo"><input id="cKm" inputmode="decimal" value="8" aria-label="Distância em km"><i>km</i></span></label>
+        <label><span>Tempo <small>(opcional)</small></span><span class="campo"><input id="cMin" inputmode="numeric" value="20" aria-label="Tempo em minutos"><i>min</i></span></label>
+      </form>
+      <div class="atalhos">
+        <button type="button" data-v="22" data-k="8" data-m="20"><i style="background:var(--verde)"></i>R$ 22 · 8 km</button>
+        <button type="button" data-v="12" data-k="6" data-m="15"><i style="background:var(--amarelo)"></i>R$ 12 · 6 km</button>
+        <button type="button" data-v="9" data-k="7" data-m="18"><i style="background:var(--laranja)"></i>R$ 9 · 7 km</button>
+        <button type="button" data-v="6" data-k="9" data-m="20"><i style="background:var(--vermelho)"></i>R$ 6 · 9 km</button>
+      </div>
+      <p class="nota" style="margin-top:16px">Carro de exemplo: gasolina a R$ 6,29, 11 km por litro e meta de R$ 220 por dia. No app, a conta usa o seu carro e a sua meta.</p>
+    </div>
+    <div class="resultado">
+      <div class="res" id="cRes" aria-live="polite">
+        <div class="palco"></div>
+        <div class="titulo">Vale a pena</div>
+        <div class="frase">Sobra R$ 0,00 nesta corrida</div>
+        <div class="numeros"><span><b class="pkm">R$ 0,00</b> por km</span><span><b class="phora">R$ 0,00</b> por hora</span></div>
+        <div class="regua"><div class="trilho"><span class="minimo"></span><span class="marca"></span></div>
+          <div class="legenda"><span>Não paga o carro</span><span>Seu mínimo: <b class="minkm">R$ 0,00</b>/km</span><span>Vale a pena</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="funcoes" style="padding-top:20px">
+  <div class="faixa">
+    <div class="titulo-secao">
+      <span class="etiqueta">Seu dinheiro</span>
+      <h2>Saiba quanto <span class="destaque">sobra</span> de verdade</h2>
+      <p>Combustível, manutenção e o custo do carro entram na conta. Você vê o lucro real, não só o que caiu no app.</p>
+    </div>
+    <div class="cartoes">
+      <div class="cartao com-tela">
+        <div class="texto"><h3>Lucro do dia</h3><p>Quanto já sobrou hoje, quanto falta para a meta e o seu mínimo por km e por hora.</p></div>
+        <div class="recorte"><img src="img/lucro.webp" alt="" loading="lazy"></div>
+      </div>
+      <div class="cartao com-tela">
+        <div class="texto"><h3>Sua semana</h3><p>Ganho, lucro por hora, km rodados e os horários que mais deram lucro.</p></div>
+        <div class="recorte"><img src="img/semana.webp" alt="" loading="lazy"></div>
+      </div>
+      <div class="cartao com-tela">
+        <div class="texto"><h3>Meta batida</h3><p>Bateu a meta? Compartilhe uma imagem com o resultado do dia nos grupos e nas redes.</p></div>
+        <div class="recorte"><img class="baixo" src="img/parabens.webp" alt="" loading="lazy"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="seguranca" class="seguranca">
+  <div class="faixa duas-colunas">
+    <div>
+      <span class="etiqueta">Ninguém roda sozinho</span>
+      <h2>Segurança com quem você <span class="destaque">confia</span></h2>
+      <p style="font-size:19px;margin:14px 0 28px">Monte a sua expedição com os amigos motoristas e cuidem uns dos outros.</p>
+      <div class="lista-seg">
+        <div class="item-seg"><div class="bolinha" style="background:rgba(255,200,61,.15);color:var(--amarelo)">◆</div><div><h3>Expedição no mapa</h3><p>Vejam uns aos outros enquanto rodam, combinem paradas e conversem.</p></div></div>
+        <div class="item-seg"><div class="bolinha" style="background:rgba(255,90,90,.15);color:var(--vermelho)">✚</div><div><h3>Pedido de ajuda</h3><p>Pneu furado, pane ou sem combustível: a colônia vê o pedido e quem vem ajudar acompanha você até resolver.</p></div></div>
+        <div class="item-seg"><div class="bolinha" style="background:rgba(61,155,255,.15);color:var(--azul)">✱</div><div><h3>Palavra de segurança</h3><p>Uma mensagem comum para quem está do seu lado. Para os seus amigos, um alerta com onde você está.</p></div></div>
+        <div class="item-seg"><div class="bolinha" style="background:rgba(47,210,122,.15);color:var(--verde)">●</div><div><h3>Gravação de segurança</h3><p>Grava a corrida com data e hora. O arquivo fica só no seu celular.</p></div></div>
+      </div>
+    </div>
+    <div class="tela ordem-tela"><img src="img/palavra.webp" alt="Alerta da palavra de segurança na conversa da expedição" loading="lazy"></div>
+  </div>
+</section>
+
+<section id="colonia">
+  <div class="faixa duas-colunas">
+    <div class="tela ordem-tela"><img src="img/colonia.webp" alt="Mapa da colônia com avisos dos motoristas" loading="lazy"></div>
+    <div>
+      <span class="etiqueta">Pode contar com a sua colônia</span>
+      <h2>Os motoristas da sua <span class="destaque">cidade</span>, juntos</h2>
+      <p style="font-size:19px;margin-top:14px">Na colônia, cada motorista deixa trilhas no mapa e ajuda os outros a rodar melhor.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px">
+        <span class="nivel" style="padding:10px 14px"><i style="background:var(--vermelho)"></i>Acidente</span>
+        <span class="nivel" style="padding:10px 14px"><i style="background:var(--azul)"></i>Alagamento</span>
+        <span class="nivel" style="padding:10px 14px"><i style="background:var(--laranja)"></i>Via bloqueada</span>
+        <span class="nivel" style="padding:10px 14px"><i style="background:var(--dourado)"></i>Posto barato</span>
+        <span class="nivel" style="padding:10px 14px"><i style="background:var(--verde)"></i>Muita chamada</span>
+      </div>
+      <p class="nota" style="margin-top:18px">E um mural com perguntas e dicas de quem roda na mesma cidade.</p>
+    </div>
+  </div>
+</section>
+
+<section id="jogo" style="padding-top:20px">
+  <div class="faixa">
+    <div class="vitrine">
+      <div>
+        <span class="etiqueta">Minigame</span>
+        <h2>Corrida <span style="color:var(--dourado)">Certa</span></h2>
+        <p style="font-size:19px;margin-top:14px">60 segundos, uma corrida atrás da outra. Aceite as que valem a pena, recuse as que não pagam o carro e leve folhas para o formigueiro.</p>
+        <div class="regras">
+          <div><i style="background:rgba(47,210,122,.16);color:var(--verde)">→</i>Arraste para a direita para aceitar</div>
+          <div><i style="background:rgba(255,90,90,.16);color:var(--vermelho)">←</i>Arraste para a esquerda para recusar</div>
+          <div><i style="background:rgba(255,210,74,.16);color:var(--dourado)">×3</i>Acertos seguidos multiplicam as folhas</div>
+        </div>
+        <a class="botao azul" href="jogo/index.html">Jogar agora</a>
+      </div>
+      <div class="placar">
+        <h3><span id="mesRanking">Ranking do mês</span> <small>zera todo mês</small></h3>
+        <ol>
+          <li><span class="pos">1</span><span>formiga_ligeira</span><b>412</b></li>
+          <li><span class="pos">2</span><span>rota_do_sol</span><b>388</b></li>
+          <li><span class="pos">3</span><span>carona_boa</span><b>351</b></li>
+          <li><span class="pos">4</span><span>ze_volante</span><b>327</b></li>
+          <li><span class="pos">5</span><span>noturno_sm</span><b>298</b></li>
+        </ol>
+        <div class="exemplo">Prévia com apelidos inventados. Para entrar no ranking, jogue com a sua conta VolAnt.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:20px">
+  <div class="faixa">
+    <div class="titulo-secao"><span class="etiqueta">Em 3 passos</span><h2>Comece hoje</h2></div>
+    <div class="passos">
+      <div class="passo"><h3>Baixe e crie a sua conta</h3><p style="margin-top:8px">Com o seu e-mail. É grátis para começar.</p></div>
+      <div class="passo"><h3>Cadastre o carro e a meta</h3><p style="margin-top:8px">Consumo, combustível e quanto você quer tirar por dia.</p></div>
+      <div class="passo"><h3>Toque em “Começar a rodar”</h3><p style="margin-top:8px">E deixe a sua formiga ajudar em cada corrida.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="perguntas" style="padding-top:20px">
+  <div class="faixa" style="max-width:820px">
+    <div class="titulo-secao"><span class="etiqueta">Dúvidas</span><h2>Perguntas</h2></div>
+    <details><summary>Funciona no iPhone?</summary><p>Sim. No iPhone a formiga não fica por cima de outros apps (a Apple não permite). Para calcular uma corrida, segure o ícone do VolAnt e toque em “Calcular corrida”.</p></details>
+    <details><summary>Quanto custa?</summary><p>Você começa grátis. Os planos aparecem dentro do próprio app.</p></details>
+    <details><summary>Onde ficam os meus dados?</summary><p>Corridas, carro e gravações ficam só no seu celular. No servidor fica só o necessário para a sua conta e para a segurança com a sua expedição. Não vendemos dados e não mostramos anúncios. <a href="privacidade/index.html" style="color:var(--link)">Ver a política de privacidade</a>.</p></details>
+    <details><summary>O app fica com a minha localização o tempo todo?</summary><p>Não. Só enquanto o seu dia de trabalho está aberto ou quando você pede ajuda. Ao tocar em “Encerrar o dia”, para.</p></details>
+    <details><summary>Como excluo a minha conta?</summary><p>No app, em Carro → Sua conta, ou <a href="excluir-conta/index.html" style="color:var(--link)">por esta página</a>, sem precisar do aplicativo.</p></details>
+  </div>
+</section>
+
+<div class="chamada">
+  <div class="faixa">
+    <img class="simbolo" src="img/simbolo.svg" alt="">
+    <h2 style="max-width:760px;margin:0 auto">De grão em grão, sua formiga te ajuda a <span class="verde">ganhar mais.</span></h2>
+    <div class="lojas">
+      <span class="botao azul em-breve" aria-disabled="true"><span class="duas"><small>Em breve para</small>Android</span></span>
+      <span class="botao contorno em-breve" aria-disabled="true"><span class="duas"><small>Em breve para</small>iPhone</span></span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="faixa">
+    <img src="img/logo.svg" alt="VolAnt">
+    <span>© 2026 Prontosat Rastreamento Veicular</span>
+    <nav>
+      <a href="privacidade/index.html">Privacidade</a>
+      <a href="excluir-conta/index.html">Excluir conta</a>
+      <a href="mailto:volant.suporte@gmail.com">volant.suporte@gmail.com</a>
+    </nav>
+  </div>
+</footer>
+
+<script>"use strict";(()=>{const e=matchMedia("(prefers-reduced-motion: reduce)").matches,t=(e,t=document)=>t.querySelector(e),a=(e,t=document)=>[...t.querySelectorAll(e)];function r({cor:e="#8CC4FF",folha:t=null,folhaCor:a=null,baixa:r=0,classe:i=""}={}){const o=(e,t)=>[e[0]+(t[0]-e[0])*r,e[1]+(t[1]-e[1])*r].map(e=>e.toFixed(2)).join(" "),s=a||e;let l="";return"grande"===t&&(l=`<g class="folha"><path d="M16.5 17.5L15 12"/><path d="M15 12C9 12 5 7 6 1.5C11.5 2.5 16 6 15 12Z" fill="${s}" stroke="${s}" stroke-width="1.2"/><path d="M15 12L6 1.5M12.3 8.85L9.8 9.8M12.3 8.85L13.2 6M9.6 5.7L7.4 6.3M9.6 5.7L10.4 3.6" stroke="#0E1B2E" stroke-width="1"/></g>`),"pequena"===t&&(l=`<g class="folha"><path d="M16.5 17.5L15.5 13.5"/><path d="M15.5 13.5C12.5 13.5 10 10.5 10.5 7C13.5 8 16.3 10 15.5 13.5Z" fill="${s}" stroke="${s}" stroke-width="1.2"/><path d="M15.5 13.5L10.5 7M13.6 11L12 11.5M13.6 11L14.2 9.2" stroke="#0E1B2E" stroke-width="1"/></g>`),`<svg class="${i}" viewBox="0 0 32 32" fill="none" stroke="${e}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${l}<path class="pa" d="M14 22l-3 6M16.5 22.5v6M19 22l3 6"/><path class="pb" d="M14 22l-1.2 6.1M16.5 22.5l-1.6 5.9M19 22l1.4 6.1"/><ellipse cx="9" cy="20" rx="5.5" ry="4" fill="${e}"/><ellipse cx="16.5" cy="20" rx="3" ry="2.6" fill="${e}"/><circle cx="23" cy="18.5" r="3.2" fill="${e}"/><path d="M24.5 16Q${o([26.5,12],[27.5,13.2])} ${o([29.5,12],[30.8,14.8])}M22.5 15.5Q${o([22.5,11.5],[24.2,11.8])} ${o([25.5,10],[28.2,12.6])}"/></svg>`}function i(e,t,a=1,r="#2FD27A"){return`<g transform="scale(${a}) translate(-16 -19)" fill="none" stroke="${e}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${t?`<path d="M16.5 17.5L15 12" stroke="${e}"/><path d="M15 12C9 12 5 7 6 1.5C11.5 2.5 16 6 15 12Z" fill="${r}" stroke="${r}" stroke-width="1.2"/>`:""}<path d="M14 22l-3 6M16.5 22.5v6M19 22l3 6"><animate attributeName="opacity" values="1;0;1" dur=".42s" calcMode="discrete" repeatCount="indefinite"/></path><path d="M14 22l-1.2 6.1M16.5 22.5l-1.6 5.9M19 22l1.4 6.1" opacity="0"><animate attributeName="opacity" values="0;1;0" dur=".42s" calcMode="discrete" repeatCount="indefinite"/></path><ellipse cx="9" cy="20" rx="5.5" ry="4" fill="${e}"/><ellipse cx="16.5" cy="20" rx="3" ry="2.6" fill="${e}"/><circle cx="23" cy="18.5" r="3.2" fill="${e}"/><path d="M24.5 16q2-4 5-4M22.5 15.5q0-4 3-5.5"/></g>`}t("header").insertAdjacentHTML("beforeend",`<div class="trilha-topo" aria-hidden="true"><div class="pontos"></div><div class="pontos cheios"></div><div class="guia">${r({cor:"#8CC4FF"})}</div><div class="toca"><svg viewBox="0 0 32 32"><path d="M2 28C8 26 12 14 15 8C16 6.5 17 6.5 18 8C21 14 25 26 30 28Z" fill="#D1913F"/><ellipse cx="16.5" cy="9" rx="2.2" ry="1" fill="#4A2A10"/><path d="M15.6 7.2C14 7 12.6 5.4 12.9 3.4C14.8 3.8 16.2 5.2 15.6 7.2Z" fill="#FFD24A" class="ouro" opacity="0"/></svg></div></div>`);const o=t(".trilha-topo"),s=t(".guia",o),l=t(".toca",o);let n,c=scrollY;function d(){const e=document.documentElement.scrollHeight-innerHeight,a=e>0?Math.min(1,Math.max(0,scrollY/e)):0;o.style.setProperty("--p",(96*a+1).toFixed(2)+"%"),s.classList.toggle("volta",scrollY<c),s.classList.add("anda"),clearTimeout(n),n=setTimeout(()=>s.classList.remove("anda"),180);const r=a>.985;l.classList.toggle("chegou",r),t(".ouro",l).setAttribute("opacity",r?1:0),c=scrollY}addEventListener("scroll",d,{passive:!0}),d();const p=t(".abertura");let u='<svg class="fundo-trilhas" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">';["M-60 610C180 520 360 690 600 570S980 410 1260 470","M-60 130C200 210 430 50 700 150S1060 300 1260 190","M240 780C380 620 640 660 800 540S1080 360 1260 350"].forEach((e,t)=>{u+=`<path id="trilha${t}" d="${e}" fill="none" stroke="#3D9BFF" stroke-opacity=".2" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 17"/>`}),[[0,0,!0],[0,5,!1],[0,10,!0],[1,2,!0],[1,9,!1],[2,4,!0],[2,12,!1]].forEach(([e,t,a])=>{u+=`<g opacity=".55">${i("#5AAEFF",a,.95)}<animateMotion dur="${18+3*e}s" begin="-${t}s" repeatCount="indefinite" rotate="auto"><mpath href="#trilha${e}"/></animateMotion></g>`}),u+="</svg>",p.insertAdjacentHTML("afterbegin",u),t(".abertura .faixa").style.position="relative",t(".abertura .faixa").style.zIndex=1;const f=t(".chamada img.simbolo");f&&(f.outerHTML=function(){const e=(e,t,a,r,i)=>{const o=a*Math.PI/180;return`<g><animateTransform attributeName="transform" type="translate" values="0 0;${(2.2*Math.cos(o)).toFixed(2)} ${(2.2*Math.sin(o)).toFixed(2)};0 0" dur="1.6s" begin="-${i}s" repeatCount="indefinite"/><g transform="translate(${e} ${t}) rotate(${a}) scale(${r})" fill="none" stroke="#3A2210" stroke-width="1.1" stroke-linecap="round"><ellipse cx="-5" cy="0" rx="3.6" ry="2.6" fill="#3A2210"/><ellipse cx="0" cy="0" rx="2" ry="1.8" fill="#3A2210"/><circle cx="4.2" cy="-.6" r="2.1" fill="#3A2210"/><path d="M5.2 -2.2q1.5 -2.5 3.5 -2.5M4 -2.6q0 -2.6 2 -3.6"/><path d="M-1.5 1.5l-1.5 3.5M0 1.8v3.6M1.5 1.5l1.5 3.5"/></g></g>`};return`<svg class="formigueiro" viewBox="0 0 96 96" aria-hidden="true"><rect width="96" height="96" rx="22" fill="#3D9BFF"/>${[[17,72,"q-2 -12 -7 -16"],[19.5,72,"q0 -15 2 -19"],[22,72,"q3 -10 7 -13"],[79,72,"q2 -12 7 -16"],[76.5,72,"q0 -15 -2 -19"],[74,72,"q-3 -10 -7 -13"]].map(([e,t,a],r)=>`<path d="M${e} ${t}${a}" stroke="#2FD27A" stroke-width="2.4" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" values="-5 ${e} ${t};5 ${e} ${t};-5 ${e} ${t}" dur="${2.4+.3*r}s" repeatCount="indefinite"/></path>`).join("")}<ellipse cx="48" cy="75" rx="40" ry="6.5" fill="#8F5C24"/><path d="M18 74C26 70 34 50 42 30C44 25 52 25 54 30C62 50 70 70 78 74Z" fill="#D1913F"/><path d="M48 26.3C51 26.3 53 27.5 54 30C62 50 70 70 78 74L60 74C60 56 54 38 48 26.3Z" fill="#AD6F2B"/><ellipse cx="48" cy="28.5" rx="5" ry="2" fill="#4A2A10"/>`+e(37,56,-68,.78,0)+e(45,43,-75,.7,.5)+e(59,55,68,.78,1)+e(49,65,-15,.78,.3)+'<g transform="translate(48.5 21.5)" fill="none" stroke="#0E1B2E" stroke-width="1.1" stroke-linecap="round"><g><animateTransform attributeName="transform" type="rotate" values="-8 -1 -2.5;8 -1 -2.5;-8 -1 -2.5" dur="3s" repeatCount="indefinite"/><path d="M-1 -2.5l-1 -3.5"/><path d="M-2 -6c-5 0 -8 -4 -7.5 -8.5c4.5 .8 8 3.5 7.5 8.5z" fill="#FFD24A" stroke="#FFD24A"/></g><path d="M3 -13l.7 1.6 1.6 .7 -1.6 .7 -.7 1.6 -.7 -1.6 -1.6 -.7 1.6 -.7z" fill="#FFD24A" stroke="none"><animate attributeName="opacity" values="1;.2;1" dur="1.4s" repeatCount="indefinite"/></path><path d="M-13 -7l.5 1.2 1.2 .5 -1.2 .5 -.5 1.2 -.5 -1.2 -1.2 -.5 1.2 -.5z" fill="#FFD24A" stroke="none"><animate attributeName="opacity" values=".2;1;.2" dur="1.4s" repeatCount="indefinite"/></path><ellipse cx="-5" cy="0" rx="3.6" ry="2.6" fill="#0E1B2E"/><ellipse cx="0" cy="0" rx="2" ry="1.8" fill="#0E1B2E"/><circle cx="4.2" cy="-.6" r="2.1" fill="#0E1B2E"/><path d="M5.2 -2.2q1.5 -2.5 3.5 -2.5M4 -2.6q0 -2.6 2 -3.6"/><path d="M-1.5 1.5l-1.5 3.5M0 1.8v3.6M1.5 1.5l1.5 3.5"/></g></svg>'}());const h=document.createElement("a");h.className="canto",h.href="jogo/index.html",h.setAttribute("aria-label","Jogar Corrida Certa, o jogo da formiga");const m=(e,t,a)=>`<path d="M${e} 151${t}"><animateTransform attributeName="transform" type="rotate" values="-6 ${e} 151;6 ${e} 151;-6 ${e} 151" dur="${2.6+.35*a}s" repeatCount="indefinite"/></path>`,g=(e,t,a,r)=>`<clipPath id="${a}"><rect x="${e-14}" y="${t-22}" width="28" height="22.4"/></clipPath><g clip-path="url(#${a})"><g><animateTransform attributeName="transform" type="translate" values="0 8;0 8;0 0;0 0;0 8" keyTimes="0;.62;.68;.9;1" dur="8s" begin="${r}s" repeatCount="indefinite"/><circle cx="${e}" cy="${t-2.6}" r="3.3" fill="#8CC4FF"/><circle cx="${e+1.3}" cy="${t-3.2}" r=".7" fill="#0E1B2E"/><g fill="none" stroke="#8CC4FF" stroke-width="1.5" stroke-linecap="round"><path d="M${e+1} ${t-5.4}q1.6 -4 4.6 -4.4"><animateTransform attributeName="transform" type="rotate" values="-10 ${e+1} ${t-5.4};12 ${e+1} ${t-5.4};-10 ${e+1} ${t-5.4}" dur=".9s" repeatCount="indefinite"/></path><path d="M${e-1} ${t-5.4}q-1 -4 -4.4 -5"><animateTransform attributeName="transform" type="rotate" values="10 ${e-1} ${t-5.4};-12 ${e-1} ${t-5.4};10 ${e-1} ${t-5.4}" dur="1.1s" repeatCount="indefinite"/></path></g></g></g>`;let $='<span class="canto-rotulo">Jogar <b>Corrida Certa</b></span><svg viewBox="0 0 220 170" aria-hidden="true"><ellipse cx="170" cy="154" rx="60" ry="7" fill="#000" opacity=".3"/><path id="subida" d="M-10 160C40 150 60 122 96 118S150 96 162 71" fill="none" stroke="#8CC4FF" stroke-opacity=".38" stroke-width="3.6" stroke-linecap="round" stroke-dasharray="0 10"/><path d="M120 151C130 146 143 112 156 78C160 68 176 68 180 78C193 112 206 146 220 151Z" fill="#D1913F"/><path d="M168 69C174 69 178 72 180 76C194 112 208 146 222 151L192 151C192 120 180 92 168 69Z" fill="#AD6F2B"/><path d="M157 81C150 100 141 126 128 148" stroke="#EDB774" stroke-width="2.4" stroke-linecap="round" fill="none" opacity=".6"/>'+[[150,121,1.6,"#B97934"],[160,101,1.3,"#E8AD66"],[172,113,1.5,"#B97934"],[157,137,1.8,"#E8AD66"],[176,93,1.2,"#B97934"],[146,141,1.4,"#B97934"],[182,131,1.6,"#9C5F22"],[166,87,1.1,"#E8AD66"],[139,146,1.2,"#E8AD66"],[168,141,1.3,"#B97934"],[163,124,1.1,"#E8AD66"]].map(([e,t,a,r])=>`<circle cx="${e}" cy="${t}" r="${a}" fill="${r}"/>`).join("")+'<path d="M110 152C122 147 138 146 150 148C162 145 182 145 196 148C208 146 220 147 230 152C214 157 126 157 110 152Z" fill="#8F5C24"/><circle cx="116" cy="151" r="1.6" fill="#B97934"/><circle cx="225" cy="151.5" r="1.4" fill="#B97934"/><ellipse cx="132" cy="154" rx="3.4" ry="2.1" fill="#5B6F8C"/><ellipse cx="210" cy="155" rx="2.7" ry="1.7" fill="#5B6F8C"/><ellipse cx="168" cy="73.5" rx="9.5" ry="3.8" fill="#4A2A10"/><ellipse cx="168" cy="74.4" rx="6.4" ry="2.1" fill="#2B1505"/><ellipse cx="192" cy="129" rx="5" ry="2.5" fill="#4A2A10"/>'+g(168,74,"cortaTopo",0)+g(192,129.4,"cortaLado",-4)+`<g stroke="#2FD27A" stroke-width="2.6" stroke-linecap="round" fill="none">${m(118,"q-2 -11 -7 -15",0)}${m(121,"q0 -13 2 -17",1)}${m(124,"q3 -9 7 -12",2)}${m(218,"q2 -11 7 -15",3)}${m(215,"q0 -13 -2 -17",4)}</g>`;[[0,!0,"#2FD27A"],[2.2,!1],[4.4,!0,"#FFD24A"],[6.6,!1],[8.8,!0,"#2FD27A"]].forEach(([e,t,a])=>{$+=`<g>${i("#8CC4FF",t,.72,a)}<animateMotion dur="11s" begin="-${e}s" repeatCount="indefinite" rotate="auto"><mpath href="#subida"/></animateMotion><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.06;.92;1" dur="11s" begin="-${e}s" repeatCount="indefinite"/></g>`}),$+="</svg>",h.innerHTML=$,document.body.append(h),h.addEventListener("click",t=>{e||t.metaKey||t.ctrlKey||t.shiftKey||(t.preventDefault(),h.classList.add("entrando"),setTimeout(()=>{location.href=h.href},380))}),addEventListener("pageshow",()=>h.classList.remove("entrando"));let v=!1;try{v="1"===sessionStorage.getItem("volant-dica-jogo")}catch(e){}function y(){if(!v){v=!0;try{sessionStorage.setItem("volant-dica-jogo","1")}catch(e){}h.classList.add("dica"),setTimeout(()=>h.classList.remove("dica"),4200)}}let M,x=!1;function C(){const e=innerWidth<760,t=e&&scrollY<.6*innerHeight;h.classList.toggle("na-abertura",t);const a=document.documentElement.scrollHeight-innerHeight-scrollY<220;h.classList.toggle("perto-do-fim",a),t||a||h.classList.contains("rolando")||x||(x=!0,setTimeout(y,e?900:2500))}if(addEventListener("scroll",()=>{innerWidth<760&&(h.classList.add("rolando"),clearTimeout(M),M=setTimeout(()=>{h.classList.remove("rolando"),C()},900)),C()},{passive:!0}),C(),[".titulo-secao",".cartao","#corrida .tela","#seguranca .tela","#colonia .tela",".item-seg",".passo","details",".niveis .nivel",".chamada h2","#teste .res","#teste .calc","#jogo .vitrine"].forEach(e=>a(e).forEach(e=>e.classList.add("surge"))),a(".surge").forEach(e=>{const t=[...e.parentElement.children].filter(e=>e.classList.contains("surge"));e.style.setProperty("--atraso",.09*t.indexOf(e)+"s")}),e||!("IntersectionObserver"in window))a(".surge").forEach(e=>e.classList.add("visivel"));else{const e=new IntersectionObserver(t=>t.forEach(t=>{t.isIntersecting&&(t.target.classList.add("visivel"),e.unobserve(t.target))}),{rootMargin:"0px 0px -8% 0px"});a(".surge").forEach(t=>e.observe(t))}a("details").forEach(t=>t.addEventListener("toggle",()=>{if(!t.open||e)return;const a=document.createElement("div");a.className="passante",a.innerHTML=r({cor:"#3D9BFF"}),t.append(a),setTimeout(()=>a.remove(),1700)}));const F=4800,k=(e,t)=>t<=0?0:e/t,b=k(6.29,11)+k(380,F)+k(600,F),E=k(F,24),A=k(220,E),L=b+A,D=k(220+b*E,9),w={verde:["Vale a pena","#2FD27A","grande",0],amarelo:["No limite","#FFC83D","pequena",0],laranja:["Abaixo da meta","#FF9A3D",null,.6],vermelho:["Não cobre o custo","#FF5A5A",null,1]},B=e=>"R$ "+e.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}),T=e=>parseFloat(String(e).replace(/\./g,"").replace(",","."))||0,q=t("#cValor"),N=t("#cKm"),j=t("#cMin"),H=t("#cRes");let S=null;function I(){if(!H)return;const e=function(e,t,a){if(!(e>0&&t>0))return null;const r=e/t,i=r/L-1;let o=null,s=null;a>0&&(o=e/(a/60),s=o/D-1);const l=null!==s&&s<i?s:i,n=e-b*t;return{faixa:l<0?n<0?"vermelho":"laranja":l<.1?"amarelo":"verde",folga:l,porKm:r,porHora:o,sobra:n}}(T(q.value),T(N.value),T(j.value));if(!e)return;const[a,i,o,s]=w[e.faixa];H.style.setProperty("--cor",i),t(".titulo",H).textContent=a,t(".frase",H).textContent=e.sobra>=0?`Sobra ${B(e.sobra)} nesta corrida`:`Faltam ${B(-e.sobra)} para pagar o carro`,t(".pkm",H).textContent=B(e.porKm),t(".phora",H).textContent=e.porHora?B(e.porHora):"—";const l=Math.max(4,Math.min(96,50+100*e.folga));t(".marca",H).style.setProperty("--x",l+"%"),e.faixa!==S&&(t(".palco",H).innerHTML=r({cor:i,folha:o,folhaCor:i,baixa:s,classe:o?"chega":"treme"}),S=e.faixa)}H&&(t(".minkm").textContent=B(L),[q,N,j].forEach(e=>e.addEventListener("input",I)),a(".atalhos button").forEach(e=>e.addEventListener("click",()=>{q.value=e.dataset.v,N.value=e.dataset.k,j.value=e.dataset.m,I()})),I()),a("svg").filter(e=>e.querySelector("animate, animateMotion, animateTransform")).forEach(t=>{e?t.pauseAnimations?.():"IntersectionObserver"in window&&new IntersectionObserver(e=>e.forEach(e=>e.isIntersecting?t.unpauseAnimations?.():t.pauseAnimations?.())).observe(t)})})();</script>
+
+<script>try{document.getElementById("mesRanking").textContent="Ranking de "+new Intl.DateTimeFormat("pt-BR",{month:"long",timeZone:"America/Sao_Paulo"}).format(new Date)}catch(t){}</script>
 </body>
 </html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corrida Certa · o jogo da formiga · VolAnt</title>
+<meta name="description" content="60 segundos, uma corrida atrás da outra: aceite as que valem a pena, recuse as que não pagam o carro e entre no ranking do mês.">
+<meta name="theme-color" content="#0E1B2E">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>
+  @font-face { font-family: "Space Grotesk"; src: url(../fontes/SpaceGrotesk-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+  @font-face { font-family: Inter; src: url(../fontes/Inter-400.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: Inter; src: url(../fontes/Inter-600.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: Inter; src: url(../fontes/Inter-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+  :root { --fundo: #0E1B2E; --cartao: #16263D; --linha: #24364F; --azul: #3D9BFF; --link: #8CC4FF; --texto: #F2F6FB; --texto2: #C5D2E3; --texto3: #9FB0C6;
+          --verde: #2FD27A; --amarelo: #FFC83D; --laranja: #FF9A3D; --vermelho: #FF5A5A; --dourado: #FFD24A; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 16px/1.5 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  h1, h2, h3 { font-family: "Space Grotesk", Inter, sans-serif; letter-spacing: -.02em; margin: 0; }
+  p { margin: 0; color: var(--texto2); }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .fundo { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: .9; }
+  .app { position: relative; max-width: 460px; min-height: 100%; margin: 0 auto; padding: 14px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; }
+  .barra { display: flex; align-items: center; justify-content: space-between; height: 44px; }
+  .barra a { color: var(--texto2); text-decoration: none; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
+  .barra a img { height: 24px; }
+  .barra .nome { font: 700 15px "Space Grotesk"; color: var(--texto); }
+  .tela { display: none; flex: 1; flex-direction: column; }
+  .tela.on { display: flex; animation: entra .45s cubic-bezier(.2,.8,.3,1); }
+  @keyframes entra { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  /* inicio */
+  .inicio { text-align: center; justify-content: center; gap: 6px; padding-bottom: 30px; }
+  .inicio .heroi { position: relative; height: 190px; margin-bottom: 4px; }
+  .inicio .heroi svg { width: 190px; height: 190px; overflow: visible; }
+  .inicio h1 { font-size: 44px; line-height: 1; }
+  .inicio h1 span { color: var(--dourado); }
+  .inicio .sub { font-size: 17px; margin: 12px auto 18px; max-width: 360px; }
+  .regras { display: grid; gap: 8px; text-align: left; margin: 0 auto 22px; max-width: 360px; width: 100%; }
+  .regras div { display: flex; gap: 12px; align-items: center; background: rgba(22,38,61,.75); border: 1px solid var(--linha); border-radius: 14px; padding: 10px 12px; font-size: 14.5px; color: var(--texto2); }
+  .regras i { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-style: normal; font-weight: 800; flex: none; font-size: 14px; }
+  .minimo { font-size: 13px; color: var(--texto3); margin-bottom: 18px; }
+  .minimo b { color: var(--texto); }
+  .grande { border: 0; border-radius: 18px; padding: 17px 28px; font: 700 18px Inter; background: var(--azul); color: #06213F; box-shadow: 0 14px 34px rgba(61,155,255,.35); transition: transform .15s, background .15s; width: 100%; max-width: 360px; margin: 0 auto; }
+  .grande:hover { background: #5AAEFF; } .grande:active { transform: scale(.97); }
+  .grande.contorno { background: rgba(22,38,61,.8); color: var(--texto); border: 2px solid var(--linha); box-shadow: none; }
+
+  /* jogo */
+  .hud { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; margin-top: 6px; }
+  .relogio { position: relative; width: 54px; height: 54px; }
+  .relogio svg { width: 54px; height: 54px; transform: rotate(-90deg); }
+  .relogio b { position: absolute; inset: 0; display: grid; place-items: center; font: 700 17px "Space Grotesk"; }
+  .relogio.pouco b { color: var(--vermelho); animation: pulsa .5s ease infinite alternate; }
+  @keyframes pulsa { to { transform: scale(1.12); } }
+  .folhas { justify-self: center; display: flex; align-items: center; gap: 8px; background: rgba(22,38,61,.85); border: 1px solid var(--linha); border-radius: 999px; padding: 6px 14px 6px 8px; }
+  .folhas svg { width: 30px; height: 30px; }
+  .folhas b { font: 700 22px "Space Grotesk"; min-width: 44px; font-variant-numeric: tabular-nums; }
+  .folhas.pula { animation: pula .35s cubic-bezier(.3,1.8,.5,1); }
+  @keyframes pula { 50% { transform: scale(1.14); } }
+  .combo { font: 700 15px "Space Grotesk"; padding: 8px 12px; border-radius: 12px; background: rgba(22,38,61,.85); border: 1px solid var(--linha); color: var(--texto3); transition: all .25s; min-width: 52px; text-align: center; }
+  .combo.x2 { color: var(--amarelo); border-color: rgba(255,200,61,.5); }
+  .combo.x3 { color: #06213F; background: var(--dourado); border-color: var(--dourado); box-shadow: 0 0 22px rgba(255,210,74,.55); }
+  .ref { text-align: center; font-size: 12.5px; color: var(--texto3); margin: 12px 0 4px; }
+  .ref b { color: var(--texto2); }
+  .mesa { position: relative; flex: 1; min-height: 330px; display: grid; place-items: center; touch-action: pan-y; }
+  .oferta { position: absolute; width: 100%; max-width: 360px; background: #F4F7FB; color: #0E1B2E; border-radius: 26px; padding: 20px 22px 22px; box-shadow: 0 26px 60px rgba(0,0,0,.45); touch-action: none; user-select: none; cursor: grab; will-change: transform; }
+  .oferta.entra { animation: cartaEntra .35s cubic-bezier(.2,.9,.3,1.15); }
+  @keyframes cartaEntra { from { transform: translateY(40px) scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
+  .oferta.sai { transition: transform .38s cubic-bezier(.4,.1,.6,1), opacity .38s; opacity: 0; }
+  .oferta .topo { display: flex; justify-content: space-between; align-items: center; font: 700 12px Inter; letter-spacing: .06em; text-transform: uppercase; color: #5B6F8C; }
+  .oferta .tempo { height: 6px; border-radius: 999px; background: #DCE5F0; margin: 12px 0 16px; overflow: hidden; }
+  .oferta .tempo i { display: block; height: 100%; width: 100%; background: var(--azul); border-radius: 999px; transform-origin: left; }
+  .oferta .valor { font: 700 52px/1 "Space Grotesk"; letter-spacing: -.03em; }
+  .oferta .dist { font: 600 18px Inter; color: #34465F; margin-top: 8px; }
+  .oferta .rota { margin-top: 16px; display: grid; gap: 8px; font-size: 14.5px; color: #34465F; }
+  .oferta .rota div { display: flex; gap: 10px; align-items: center; }
+  .oferta .rota i { width: 10px; height: 10px; border-radius: 50%; border: 3px solid #0E1B2E; flex: none; }
+  .oferta .rota div:last-child i { background: #0E1B2E; border-radius: 3px; }
+  .oferta .selo { position: absolute; top: 22px; padding: 6px 12px; border-radius: 10px; font: 800 16px Inter; letter-spacing: .04em; border: 3px solid; opacity: 0; transform: rotate(-10deg); }
+  .oferta .selo.sim { right: 18px; color: #12A85A; border-color: #12A85A; transform: rotate(10deg); }
+  .oferta .selo.nao { left: 18px; color: #E04646; border-color: #E04646; }
+  .botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  .botoes button { border: 0; border-radius: 18px; padding: 16px; font: 700 17px Inter; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .12s, filter .12s; }
+  .botoes button:active { transform: scale(.95); }
+  .botoes .nao { background: rgba(255,90,90,.14); color: var(--vermelho); border: 2px solid rgba(255,90,90,.55); }
+  .botoes .sim { background: var(--verde); color: #06301A; }
+  .dica { text-align: center; font-size: 12px; color: var(--texto3); margin-top: 10px; }
+  .aviso { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); padding: 8px 14px; border-radius: 999px; font: 700 15px Inter; white-space: nowrap; pointer-events: none; opacity: 0; z-index: 3; }
+  .aviso.mostra { animation: aviso 1.1s ease forwards; }
+  @keyframes aviso { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.9); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 30% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -14px); } }
+  .portadora { position: fixed; width: 34px; height: 34px; z-index: 5; pointer-events: none; transition: left .7s cubic-bezier(.5,0,.3,1), top .7s cubic-bezier(.3,0,.6,1), transform .7s; }
+
+  /* fim */
+  .fim { text-align: center; padding-top: 10px; }
+  .fim .palco { height: 150px; position: relative; }
+  .fim .palco svg { width: 150px; height: 150px; overflow: visible; }
+  .fim .total { font: 700 64px/1 "Space Grotesk"; letter-spacing: -.03em; margin-top: 6px; }
+  .fim .total small { display: block; font: 600 15px Inter; color: var(--texto3); letter-spacing: 0; margin-top: 6px; }
+  .fim .mensagem { font-size: 17px; margin: 12px auto 18px; max-width: 340px; color: var(--texto); font-weight: 600; }
+  .resumo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .resumo div { background: rgba(22,38,61,.85); border: 1px solid var(--linha); border-radius: 16px; padding: 12px; text-align: left; }
+  .resumo span { display: block; font-size: 12px; color: var(--texto3); font-weight: 600; }
+  .resumo b { font: 700 19px "Space Grotesk"; }
+  .resumo .largo { grid-column: span 2; }
+  .acoes { display: grid; gap: 10px; }
+  .placar { margin-top: 22px; background: rgba(22,38,61,.85); border: 1px solid var(--linha); border-radius: 20px; padding: 16px; text-align: left; }
+  .placar h3 { font-size: 17px; display: flex; justify-content: space-between; align-items: baseline; }
+  .placar h3 small { font: 600 12px Inter; color: var(--texto3); }
+  .placar ol { list-style: none; padding: 0; margin: 10px 0 0; }
+  .placar li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 8px 2px; border-top: 1px solid var(--linha); font-size: 15px; color: var(--texto2); }
+  .placar li:first-child { border-top: 0; }
+  .placar li b { color: var(--texto); font-variant-numeric: tabular-nums; }
+  .placar li .pos { font: 700 14px "Space Grotesk"; color: var(--texto3); text-align: center; }
+  .placar li.voce { background: rgba(61,155,255,.12); border-radius: 10px; color: var(--texto); }
+  .placar li:nth-child(1) .pos { color: var(--dourado); }
+  .placar .obs { font-size: 12px; color: var(--texto3); margin-top: 8px; }
+  .baixe { margin-top: 18px; font-size: 14px; color: var(--texto3); }
+  .baixe a { color: var(--link); font-weight: 600; }
+  .oferta .conta { margin-top: 4px; font: 600 14px Inter; color: #5B6F8C; font-variant-numeric: tabular-nums; }
+  .grande small { display: block; font: 500 12.5px Inter; color: var(--texto3); margin-top: 2px; }
+  .inicio .acoes { display: grid; gap: 10px; width: 100%; max-width: 360px; margin: 0 auto; }
+  .modo { align-self: center; display: inline-block; font: 700 12px Inter; letter-spacing: .06em; text-transform: uppercase; color: var(--dourado); background: rgba(255,210,74,.12); border: 1px solid rgba(255,210,74,.35); border-radius: 999px; padding: 4px 10px; margin-bottom: 6px; }
+  .recorde { font-size: 13.5px; color: var(--texto3); margin-top: -6px; margin-bottom: 14px; }
+  .recorde b { color: var(--dourado); }
+  .desafio { margin-top: 14px; background: linear-gradient(135deg, rgba(255,210,74,.10), rgba(22,38,61,.85)); border: 1px solid rgba(255,210,74,.35); border-radius: 20px; padding: 16px; text-align: left; }
+  .desafio h3 { font-size: 17px; display: flex; gap: 8px; align-items: center; }
+  .desafio p { font-size: 14px; margin-top: 6px; }
+  .desafio ol { list-style: none; padding: 0; margin: 10px 0 0; }
+  .desafio li { display: grid; grid-template-columns: 1fr auto; padding: 6px 2px; border-top: 1px solid rgba(255,210,74,.18); font-size: 14.5px; color: var(--texto2); }
+  .desafio li:first-child { border-top: 0; }
+  .desafio li b { color: var(--texto); font-variant-numeric: tabular-nums; }
+  .desafio li.voce { color: var(--texto); font-weight: 600; }
+  .desafio .obs { font-size: 12px; color: var(--texto3); margin-top: 8px; }
+  .confete { position: fixed; top: -20px; width: 10px; height: 6px; border-radius: 2px; z-index: 6; pointer-events: none; animation: cai linear forwards; }
+  @keyframes cai { to { transform: translateY(110vh) rotate(720deg); } }
+  @media (max-height: 860px) {
+    .inicio .heroi { height: 140px; } .inicio .heroi svg { width: 140px; height: 140px; }
+    .inicio h1 { font-size: 38px; } .inicio .sub { margin: 8px auto 12px; font-size: 16px; }
+    .regras { gap: 6px; margin-bottom: 14px; } .regras div { padding: 8px 12px; }
+    .minimo { margin-bottom: 12px; } .grande { padding: 15px 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<svg class="fundo" id="fundo" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+<div class="app">
+  <div class="barra">
+    <a href="../index.html"><img src="../img/logo.svg" alt="VolAnt"></a>
+    <span class="nome">Corrida Certa</span>
+  </div>
+
+  <section class="tela inicio on" id="tInicio">
+    <div class="heroi" id="heroi"></div>
+    <h1>Corrida <span>Certa</span></h1>
+    <p class="sub">60 segundos, uma corrida atrás da outra. Leve folhas para o formigueiro com as escolhas certas.</p>
+    <div class="regras">
+      <div><i style="background:rgba(47,210,122,.16);color:var(--verde)">→</i>Aceite as corridas que valem a pena</div>
+      <div><i style="background:rgba(255,90,90,.16);color:var(--vermelho)">←</i>Recuse as que não pagam o carro</div>
+      <div><i style="background:rgba(255,210,74,.16);color:var(--dourado)">×3</i>Acertos seguidos multiplicam as folhas</div>
+    </div>
+    <p class="minimo">Seu carro de exemplo precisa de <b id="iMinKm"></b> por km e <b id="iMinHora"></b> por hora.</p>
+    <div class="acoes">
+      <button class="grande" id="bComecar" type="button">Começar</button>
+      <button class="grande contorno" id="bDesafio" type="button">Desafio de hoje<small>as mesmas corridas para todo mundo hoje</small></button>
+    </div>
+  </section>
+
+  <section class="tela" id="tJogo" aria-label="Partida">
+    <div class="hud">
+      <div class="relogio" id="relogio"><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="23" fill="none" stroke="#24364F" stroke-width="5"/><circle id="arco" cx="27" cy="27" r="23" fill="none" stroke="#3D9BFF" stroke-width="5" stroke-linecap="round" stroke-dasharray="144.5" stroke-dashoffset="0"/></svg><b id="seg">60</b></div>
+      <div class="folhas" id="placarFolhas"><svg viewBox="0 0 32 32"><path d="M15 12C9 12 5 7 6 1.5C11.5 2.5 16 6 15 12Z" transform="translate(4 9)" fill="#2FD27A"/><path d="M15 12L6 1.5" transform="translate(4 9)" stroke="#0E1B2E" stroke-width="1.2"/></svg><b id="nFolhas">0</b></div>
+      <div class="combo" id="combo">×1</div>
+    </div>
+    <p class="ref">Mínimo: <b id="rMinKm"></b>/km · <b id="rMinHora"></b>/hora</p>
+    <div class="mesa" id="mesa"><div class="aviso" id="aviso"></div></div>
+    <div class="botoes">
+      <button class="nao" id="bNao" type="button" aria-label="Recusar corrida">← Recusar</button>
+      <button class="sim" id="bSim" type="button" aria-label="Aceitar corrida">Aceitar →</button>
+    </div>
+    <p class="dica">Arraste o cartão ou use as setas do teclado</p>
+  </section>
+
+  <section class="tela fim" id="tFim">
+    <div class="palco" id="palcoFim"></div>
+    <span class="modo" id="fModo" hidden>Desafio de hoje</span>
+    <div class="total"><span id="fTotal">0</span><small>folhas no formigueiro</small></div>
+    <p class="mensagem" id="fMsg"></p>
+    <p class="recorde" id="fRecorde"></p>
+    <div class="resumo">
+      <div><span>Escolhas certas</span><b id="fAcerto"></b></div>
+      <div><span>Maior sequência</span><b id="fSeq"></b></div>
+      <div class="largo"><span>Melhor corrida que você pegou</span><b id="fMelhor"></b></div>
+    </div>
+    <div class="acoes">
+      <button class="grande" id="bDeNovo" type="button">Jogar de novo</button>
+      <button class="grande contorno" id="bCompartilhar" type="button">Compartilhar</button>
+    </div>
+    <div class="desafio" id="fDesafio" hidden>
+      <h3>Desafio da Expedição</h3>
+      <p>No app, todo mundo da sua Expedição joga estas mesmas corridas hoje, e o placar aparece na conversa.</p>
+      <ol id="placarExpedicao"></ol>
+      <p class="obs">Prévia com apelidos inventados.</p>
+    </div>
+    <div class="placar">
+      <h3>Ranking de novembro <small>zera todo mês</small></h3>
+      <ol id="ranking"></ol>
+      <p class="obs">Prévia com apelidos inventados. Para entrar no ranking, jogue com a sua conta VolAnt.</p>
+    </div>
+    <p class="baixe">Quer essa conta em cada corrida de verdade? <a href="../index.html#baixar">Conheça o VolAnt</a></p>
+  </section>
+</div>
+
+<script>"use strict";(()=>{const e=e=>document.querySelector(e),t=matchMedia("(prefers-reduced-motion: reduce)").matches,o=4800,a=(e,t)=>t<=0?0:e/t,r=a(6.29,11)+a(380,o)+a(600,o),n=a(o,24),i=a(220,n),s=r+i,l=a(220+r*n,9);function c(e,t,o){const a=e/t,n=a/s-1,i=e/(o/60),c=i/l-1,d=Math.min(n,c),m=e-r*t;return{faixa:d<0?m<0?"vermelho":"laranja":d<.1?"amarelo":"verde",porKm:a,porHora:i,folgaKm:n,folgaHora:c,sobra:m}}const d=e=>"R$ "+e.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}),m=e=>e.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});function f({cor:e="#8CC4FF",folha:t=null,folhaCor:o=null,baixa:a=0}={}){const r=(e,t)=>[e[0]+(t[0]-e[0])*a,e[1]+(t[1]-e[1])*a].map(e=>e.toFixed(2)).join(" "),n=o||e;return`<svg viewBox="0 0 32 32" fill="none" stroke="${e}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t?`<path d="M16.5 17.5L15 12"/><path d="M15 12C9 12 5 7 6 1.5C11.5 2.5 16 6 15 12Z" fill="${n}" stroke="${n}" stroke-width="1.2"/><path d="M15 12L6 1.5M12.3 8.85L9.8 9.8M12.3 8.85L13.2 6M9.6 5.7L7.4 6.3M9.6 5.7L10.4 3.6" stroke="#0E1B2E" stroke-width="1"/>`:""}<path d="M14 22l-3 6M16.5 22.5v6M19 22l3 6"/><ellipse cx="9" cy="20" rx="5.5" ry="4" fill="${e}"/><ellipse cx="16.5" cy="20" rx="3" ry="2.6" fill="${e}"/><circle cx="23" cy="18.5" r="3.2" fill="${e}"/><path d="M24.5 16Q${r([26.5,12],[27.5,13.2])} ${r([29.5,12],[30.8,14.8])}M22.5 15.5Q${r([22.5,11.5],[24.2,11.8])} ${r([25.5,10],[28.2,12.6])}"/></svg>`}function u(e){let t=e>>>0;return()=>{t|=0,t=t+1831565813|0;let e=Math.imul(t^t>>>15,1|t);return e=e+Math.imul(e^e>>>7,61|e)^e,((e^e>>>14)>>>0)/4294967296}}["#iMinKm","#rMinKm"].forEach(t=>e(t).textContent=d(s)),["#iMinHora","#rMinHora"].forEach(t=>{return e(t).textContent=(o=l,"R$ "+Math.round(o).toLocaleString("pt-BR"));var o}),(()=>{let o="";["M-40 120C80 200 220 60 440 150","M-40 690C120 600 260 760 440 640","M420 560C300 640 120 520 -40 620"].forEach((e,t)=>{o+=`<path id="c${t}" d="${e}" fill="none" stroke="#3D9BFF" stroke-opacity=".16" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 14"/>`}),[[0,0],[0,7],[1,3],[1,10],[2,5]].forEach(([e,t],a)=>{o+=`<g opacity=".45"><g transform="scale(.8) translate(-16 -19)" fill="none" stroke="#5AAEFF" stroke-width="1.8" stroke-linecap="round">${a%2?"":'<path d="M15 12C9 12 5 7 6 1.5C11.5 2.5 16 6 15 12Z" fill="#2FD27A" stroke="#2FD27A"/>'}<path d="M14 22l-3 6M16.5 22.5v6M19 22l3 6"/><ellipse cx="9" cy="20" rx="5.5" ry="4" fill="#5AAEFF"/><ellipse cx="16.5" cy="20" rx="3" ry="2.6" fill="#5AAEFF"/><circle cx="23" cy="18.5" r="3.2" fill="#5AAEFF"/></g><animateMotion dur="${14+2*e}s" begin="-${t}s" repeatCount="indefinite" rotate="auto"><mpath href="#c${e}"/></animateMotion></g>`}),e("#fundo").innerHTML=o,t&&e("#fundo").pauseAnimations?.()})(),e("#heroi").innerHTML=f({cor:"#3D9BFF",folha:!0,folhaCor:"#FFD24A"});const p=["Centro","Camobi","Tancredo Neves","Medianeira","Nossa Senhora de Lourdes","Patronato","Itararé","Urlândia","Pinheiro Machado","Nonoai","Bonfim","Duque de Caxias","Rodoviária","UFSM","Shopping","Presidente João Goulart"];let h;function v(e){document.querySelectorAll(".tela").forEach(t=>t.classList.toggle("on",t.id===e))}function x(){try{return new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo"}).format(new Date)}catch(e){return(new Date).toISOString().slice(0,10)}}function F(e="livre"){const t="desafio"===e?function(e){let t=2166136261;for(const o of e)t^=o.charCodeAt(0),t=Math.imul(t,16777619);return t>>>0}("volant-corrida-certa:"+x()):(Date.now()^1e9*Math.random())>>>0;h={modo:e,semente:t,r:u(t),folhas:0,seq:0,maiorSeq:0,certas:0,total:0,melhor:null,fim:performance.now()+6e4,jogadas:[],carta:null,ofertaAte:0,rodando:!0},v("tJogo"),C(),g(),requestAnimationFrame(y)}function M(){return 1+Math.min(2,Math.floor(h.seq/3))}function C(){e("#nFolhas").textContent=h.folhas;const t=M(),o=e("#combo");o.textContent="×"+t,o.className="combo"+(2===t?" x2":3===t?" x3":"")}function g(){const t=function(e){const t=(t,o)=>t+e()*(o-t),o=e();let a,r;o<.35?(a=t(.15,.9),r=a+t(.02,.3)):o<.5?(a=t(.015,.08),r=a+t(.03,.3)):o<.78?(a=t(-.42,-.08),r=a+t(0,.3)):(a=t(-.82,-.62),r=a+t(0,.2));const n=Math.round(10*t(2,16))/10,i=Math.max(5,Math.round(n*s*(1+a)*10)/10),d=Math.max(3,Math.round(i/(l*(1+r))*60)),m=p[Math.floor(e()*p.length)];let f=p[Math.floor(e()*p.length)];return f===m&&(f="Centro"),{valor:i,km:n,min:d,de:m,para:f,...c(i,n,d)}}(h.r),o=document.createElement("div");o.className="oferta entra",o.innerHTML=`<span class="selo sim">ACEITAR</span><span class="selo nao">RECUSAR</span><div class="topo"><span>Nova corrida</span><span>${t.min} min</span></div><div class="tempo"><i></i></div><div class="valor"></div><div class="dist"></div><div class="conta"></div><div class="rota"><div><i></i><span class="de"></span></div><div><i></i><span class="para"></span></div></div>`,o.querySelector(".valor").textContent=d(t.valor),o.querySelector(".dist").textContent=`${m(t.km)} km · ${t.min} min`,o.querySelector(".conta").textContent=`${d(t.porKm)} por km`,o.querySelector(".de").textContent=t.de,o.querySelector(".para").textContent=t.para,e("#mesa").append(o),h.carta={el:o,o:t,nasceu:performance.now()},h.ofertaAte=performance.now()+7e3,function(e){let t=0,o=0,a=0,r=!1;const n=e.querySelector(".selo.sim"),i=e.querySelector(".selo.nao");e.addEventListener("pointerdown",a=>{r=!0,t=a.clientX,o=a.clientY,e.setPointerCapture(a.pointerId),e.style.transition="none",e.style.cursor="grabbing"}),e.addEventListener("pointermove",s=>{if(!r)return;a=s.clientX-t;const l=.25*(s.clientY-o);e.style.transform=`translate(${a}px, ${l}px) rotate(${a/18}deg)`,n.style.opacity=Math.max(0,Math.min(1,a/90)),i.style.opacity=Math.max(0,Math.min(1,-a/90))});const s=()=>{r&&(r=!1,e.style.cursor="",Math.abs(a)>90?D(a>0):(e.style.transition="transform .25s cubic-bezier(.3,1.4,.5,1)",e.style.transform="",n.style.opacity=0,i.style.opacity=0),a=0)};e.addEventListener("pointerup",s),e.addEventListener("pointercancel",s)}(o)}function y(o){if(!h.rodando)return;const a=Math.max(0,(h.fim-o)/1e3);if(e("#seg").textContent=Math.ceil(a),e("#arco").setAttribute("stroke-dashoffset",(144.5*(1-a/60)).toFixed(1)),e("#relogio").classList.toggle("pouco",a<=10),h.carta){const e=Math.max(0,(h.ofertaAte-o)/7e3),t=h.carta.el.querySelector(".tempo i");t.style.transform=`scaleX(${e})`,t.style.background=e<.3?"#FF5A5A":"#3D9BFF",e<=0&&D(!1,!0)}if(a<=0)return function(){h.rodando=!1,h.carta&&(h.carta.el.remove(),h.carta=null);const o=h.total?Math.round(h.certas/h.total*100):0,a="desafio"===h.modo;(function(e,o){if(t||o<=0)return void(e.textContent=o);const a=performance.now(),r=Math.min(1400,500+4*o),n=t=>{const i=Math.min(1,(t-a)/r);e.textContent=Math.round(o*(1-Math.pow(1-i,3))),i<1&&requestAnimationFrame(n)};requestAnimationFrame(n)})(e("#fTotal"),h.folhas),e("#fModo").hidden=!a,e("#fAcerto").textContent=`${h.certas} de ${h.total} (${o}%)`,e("#fSeq").textContent=`${h.maiorSeq} seguidas`,e("#fMelhor").textContent=h.melhor?`${d(h.melhor.valor)} · ${m(h.melhor.km)} km (${d(h.melhor.porKm)}/km)`:"—",e("#fMsg").textContent=o>=85?"Formiga experiente! Você sabe escolher corrida.":o>=65?"Mandou bem! Mais um pouco e entra no topo.":"Cada corrida conta: no app, a formiga calcula para você.",e("#palcoFim").innerHTML=f({cor:o>=65?"#2FD27A":"#FFC83D",folha:!0,folhaCor:o>=85?"#FFD24A":null});const r=a?"volant-cc-desafio-"+x():"volant-cc-recorde";let n=0;try{n=parseInt(localStorage.getItem(r)||"0",10)||0}catch(e){}const i=h.folhas>n;if(i)try{localStorage.setItem(r,String(h.folhas))}catch(e){}const s=e("#fRecorde");if(s.replaceChildren(),i&&n>0){s.append("Novo recorde! Antes: ");const e=document.createElement("b");e.textContent=n,s.append(e)}else if(!i){s.append(a?"Seu melhor no desafio de hoje: ":"Seu recorde: ");const e=document.createElement("b");e.textContent=n,s.append(e)}e("#fDesafio").hidden=!a,a&&$(e("#placarExpedicao"),[["@duda_rs",214],["@beto_sm",187],["@lu_noturna",152],["você",h.folhas]].sort((e,t)=>t[1]-e[1]),!1);if($(e("#ranking"),[["formiga_ligeira",412],["rota_do_sol",388],["carona_boa",351],["ze_volante",327],["noturno_sm",298],["sobe_morro",276],["pe_no_freio",241],["você",h.folhas]].sort((e,t)=>t[1]-e[1]).slice(0,8),!0),e("#bCompartilhar").textContent="Compartilhar",v("tFim"),scrollTo(0,0),!t&&o>=65)for(let e=0;e<36;e++){const t=document.createElement("i");t.className="confete",t.style.left=100*Math.random()+"vw",t.style.background=["#3D9BFF","#2FD27A","#FFC83D","#FF9A3D","#FFD24A"][e%5],t.style.animationDuration=1.6+1.6*Math.random()+"s",t.style.animationDelay=.4*Math.random()+"s",document.body.append(t),setTimeout(()=>t.remove(),3800)}}();requestAnimationFrame(y)}function A(t,o){const a=e("#aviso");a.textContent=t,a.style.background=o,a.style.color="#FFC83D"===o||"#2FD27A"===o||"#FFD24A"===o?"#0E1B2E":"#fff",a.classList.remove("mostra"),a.offsetWidth,a.classList.add("mostra")}function b(o){if(t)return;const a=e("#mesa").getBoundingClientRect(),r=e("#placarFolhas").getBoundingClientRect(),n=document.createElement("div");n.className="portadora",n.innerHTML=f({cor:"#3D9BFF",folha:!0,folhaCor:o?"#FFD24A":"#2FD27A"}),n.style.left=a.left+a.width/2-17+"px",n.style.top=a.top+a.height/2-17+"px",document.body.append(n),requestAnimationFrame(()=>requestAnimationFrame(()=>{n.style.left=r.left+4+"px",n.style.top=r.top+2+"px",n.style.transform="scale(.6) rotate(-20deg)"})),setTimeout(()=>{n.remove();const t=e("#placarFolhas");t.classList.remove("pula"),t.offsetWidth,t.classList.add("pula")},720)}function D(e,t=!1){if(!h.carta||!h.rodando)return;const{el:o,o:a,nasceu:r}=h.carta;h.carta=null;const n=e?"verde"===a.faixa||"amarelo"===a.faixa:"laranja"===a.faixa||"vermelho"===a.faixa,i=!e&&"amarelo"===a.faixa;let s=0;n?(h.seq++,h.certas++):i||(h.seq=0),h.maiorSeq=Math.max(h.maiorSeq,h.seq);const l=M();e?("verde"===a.faixa?(s=Math.max(5,Math.round(a.sobra))*l,A(`+${s} · Vale a pena!`,3===l?"#FFD24A":"#2FD27A"),b(3===l)):"amarelo"===a.faixa?(s=3*l,A(`+${s} · No limite`,"#FFC83D"),b(!1)):"laranja"===a.faixa?(s=-3,A(a.folgaKm>=0?"−3 · Demora demais para o valor":"−3 · Abaixo da meta","#FF9A3D")):(s=-8,A("−8 · Não cobria o custo","#FF5A5A")),"verde"!==a.faixa&&"amarelo"!==a.faixa||(!h.melhor||a.porKm>h.melhor.porKm)&&(h.melhor=a)):"laranja"===a.faixa||"vermelho"===a.faixa?(s=2*l,A(t?`+${s} · Deixou passar, boa`:`+${s} · Boa recusa!`,"#3D9BFF")):"verde"===a.faixa?A(t?"O tempo acabou: era boa!":"Ops, essa era boa!","#5B6F8C"):A("Ok, era no limite","#5B6F8C"),h.folhas=Math.max(0,h.folhas+s),h.total++,h.jogadas.push({aceitou:e,ms:Math.round(performance.now()-r)}),navigator.vibrate?.(n?12:[10,40,10]),C();const c=e?1:-1;o.classList.remove("entra"),o.classList.add("sai"),o.style.transform=`translate(${520*c}px, -40px) rotate(${24*c}deg)`,setTimeout(()=>o.remove(),400),setTimeout(()=>{h.rodando&&g()},230)}function $(e,t,o){e.replaceChildren(),t.forEach(([t,a],r)=>{const n=document.createElement("li");if("você"===t&&(n.className="voce"),o){const e=document.createElement("span");e.className="pos",e.textContent=r+1,n.append(e)}const i=document.createElement("span");i.textContent=t;const s=document.createElement("b");s.textContent=a,n.append(i,s),e.append(n)})}e("#bComecar").addEventListener("click",()=>F("livre")),e("#bDesafio").addEventListener("click",()=>F("desafio")),e("#bDeNovo").addEventListener("click",()=>F(h?.modo||"livre")),e("#bSim").addEventListener("click",()=>D(!0)),e("#bNao").addEventListener("click",()=>D(!1)),addEventListener("keydown",e=>{h?.rodando&&("ArrowRight"===e.key&&D(!0),"ArrowLeft"===e.key&&D(!1))}),e("#bCompartilhar").addEventListener("click",async()=>{const t="desafio"===h.modo?"no Desafio de hoje do Corrida Certa":"no Corrida Certa",o=`Fiz ${h.folhas} folhas ${t}, o jogo da formiga do VolAnt. Consegue mais? https://volant.app.br/jogo/`,a=e("#bCompartilhar");try{if(navigator.share)return void await navigator.share({text:o})}catch(e){if(e&&"AbortError"===e.name)return}try{await navigator.clipboard.writeText(o),a.textContent="Texto copiado!"}catch(e){a.textContent="Não deu para copiar"}})})();</script>
+</body>
+</html>
