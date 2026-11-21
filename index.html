@@ -31,6 +31,10 @@
           --verde:#2FD27A; --amarelo:#FFC83D; --laranja:#FF9A3D; --vermelho:#FF5A5A; --dourado:#FFD24A; }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  /* Sem a barra de rolagem do navegador: quem mostra o caminho e a formiga da trilha do topo.
+     So com o script ligado (sem ele nao ha formiga, entao a barra fica). A pagina rola igual. */
+  html.js { scrollbar-width: none; }
+  html.js::-webkit-scrollbar { display: none; }
   body { margin: 0; background: var(--fundo); color: var(--texto); font: 17px/1.55 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
   img { max-width: 100%; display: block; }
   a { color: inherit; }
