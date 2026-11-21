@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>VolAnt · Convite</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<style>
+  :root { --fundo:#0E1B2E; --cartao:#16263D; --linha:#24364F; --azul:#3D9BFF; --link:#8CC4FF; --verde:#2ED47A;
+          --texto:#F2F6FB; --texto2:#C5D2E3; --texto3:#9FB0C6; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--fundo); color:var(--texto); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:480px; margin:0 auto; padding:28px 22px 40px; }
+  .marca { display:flex; align-items:center; gap:10px; font-weight:700; font-size:22px; margin-bottom:26px; text-decoration:none; color:inherit; }
+  .quem { display:inline-flex; align-items:center; gap:8px; background:rgba(46,212,122,.12); color:var(--verde);
+          border:1.5px solid rgba(46,212,122,.55); border-radius:999px; padding:6px 14px; font-weight:700; font-size:15px; }
+  h1 { font-size:30px; line-height:1.15; margin:16px 0 10px; }
+  p { color:var(--texto2); margin:0 0 18px; }
+  .passos { background:var(--cartao); border-radius:18px; padding:6px 18px; margin:22px 0; }
+  .passo { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--linha); color:var(--texto2); }
+  .passo:last-child { border-bottom:0; }
+  .passo b { flex:none; width:26px; height:26px; border-radius:50%; background:rgba(61,155,255,.18); color:var(--link);
+             display:grid; place-items:center; font-size:14px; }
+  .botao { display:flex; align-items:center; justify-content:center; height:56px; border-radius:16px; font-weight:700;
+           font-size:17px; text-decoration:none; margin-bottom:10px; }
+  .cheio { background:var(--azul); color:#0E1B2E; }
+  .vazado { border:2px solid var(--linha); color:var(--texto); }
+  .pequeno { color:var(--texto3); font-size:13.5px; text-align:center; margin-top:14px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="marca" href="../"><img src="../img/simbolo.svg" alt="" style="width:32px;height:32px">VolAnt</a>
+  <span class="quem" id="quem">Um colega te chamou</span>
+  <h1>Venha para a colônia dos motoristas</h1>
+  <p>O VolAnt mostra na hora se a corrida vale a pena e junta os motoristas da sua cidade para se ajudarem. É grátis.</p>
+  <a class="botao cheio" id="android" href="https://play.google.com/store/apps/details?id=br.com.volant.app">Baixar no Android</a>
+  <a class="botao vazado" id="iphone" href="https://apps.apple.com/br/app/id6836894723">Baixar no iPhone</a>
+  <div class="passos">
+    <div class="passo"><b>1</b><span>Baixe o VolAnt e crie a sua conta.</span></div>
+    <div class="passo"><b>2</b><span id="passo2">O app já sabe quem te chamou. É só confirmar.</span></div>
+    <div class="passo"><b>3</b><span>Você pede para entrar na expedição dele e vocês se veem no mapa.</span></div>
+  </div>
+  <p class="pequeno">O link leva só o nome de usuário de quem te convidou. Nada sobre você é enviado.</p>
+</main>
+<script>
+  // Só letras, números, ponto e sublinhado: o nome de usuário de quem convidou.
+  var de = (new URLSearchParams(location.search).get('de') || '').replace(/[^a-z0-9_.]/gi, '').slice(0, 24);
+  if (de.length >= 3) {
+    document.getElementById('quem').textContent = '@' + de + ' te chamou';
+    document.getElementById('passo2').textContent = 'O app já sabe que foi @' + de + '. É só confirmar.';
+    var a = document.getElementById('android');
+    a.href += '&referrer=' + encodeURIComponent('convite=' + de);
+  }
+</script>
+</body>
+</html>
