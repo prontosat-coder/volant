@@ -25,34 +25,49 @@
              display:grid; place-items:center; font-size:14px; }
   .botao { display:flex; align-items:center; justify-content:center; height:56px; border-radius:16px; font-weight:700;
            font-size:17px; text-decoration:none; margin-bottom:10px; }
-  .cheio { background:var(--azul); color:#0E1B2E; }
-  .vazado { border:2px solid var(--linha); color:var(--texto); }
+  /* Os dois botões são iguais. Fica azul o da loja do aparelho de quem abriu, e qualquer um ao passar o mouse. */
+  .botao { border:2px solid var(--linha); color:var(--texto); transition:background .15s, color .15s, border-color .15s; }
+  .botao:hover, .botao:focus-visible, .botao.meu { background:var(--azul); border-color:var(--azul); color:#0E1B2E; }
   .pequeno { color:var(--texto3); font-size:13.5px; text-align:center; margin-top:14px; }
 </style>
 </head>
 <body>
 <main>
   <a class="marca" href="../"><img src="../img/simbolo.svg" alt="" style="width:32px;height:32px">VolAnt</a>
-  <span class="quem" id="quem">Um colega te chamou</span>
-  <h1>Venha para a colônia dos motoristas</h1>
-  <p>O VolAnt mostra na hora se a corrida vale a pena e junta os motoristas da sua cidade para se ajudarem. É grátis.</p>
-  <a class="botao cheio" id="android" href="https://play.google.com/store/apps/details?id=br.com.volant.app">Baixar no Android</a>
-  <a class="botao vazado" id="iphone" href="https://apps.apple.com/br/app/id6836894723">Baixar no iPhone</a>
+  <span class="quem" id="quem">Um colega convidou você</span>
+  <h1 id="titulo">Faça parte da colônia da sua cidade</h1>
+  <p>O VolAnt é o aplicativo do motorista de app: mostra na hora se a corrida vale a pena, cuida dos seus custos e junta os motoristas da sua cidade para se ajudarem.</p>
+  <a class="botao" id="android" href="https://play.google.com/store/apps/details?id=br.com.volant.app">Baixar no Android</a>
+  <a class="botao" id="iphone" href="https://apps.apple.com/br/app/id6836894723">Baixar no iPhone</a>
+  <p class="pequeno" style="margin-top:4px">Comece grátis · Sem anúncios</p>
   <div class="passos">
     <div class="passo"><b>1</b><span>Baixe o VolAnt e crie a sua conta.</span></div>
-    <div class="passo"><b>2</b><span id="passo2">O app já sabe quem te chamou. É só confirmar.</span></div>
-    <div class="passo"><b>3</b><span>Você pede para entrar na expedição dele e vocês se veem no mapa.</span></div>
+    <div class="passo"><b>2</b><span id="passo2">Confirme quem convidou você.</span></div>
+    <div class="passo"><b>3</b><span>Faça parte da comunidade da sua colônia.</span></div>
   </div>
   <p class="pequeno">O link leva só o nome de usuário de quem te convidou. Nada sobre você é enviado.</p>
 </main>
 <script>
+  // Destaca a loja do aparelho de quem abriu o link.
+  var ua = navigator.userAgent || '';
+  if (/android/i.test(ua)) document.getElementById('android').classList.add('meu');
+  else if (/iphone|ipad|ipod/i.test(ua)) document.getElementById('iphone').classList.add('meu');
+  var q = new URLSearchParams(location.search);
   // Só letras, números, ponto e sublinhado: o nome de usuário de quem convidou.
-  var de = (new URLSearchParams(location.search).get('de') || '').replace(/[^a-z0-9_.]/gi, '').slice(0, 24);
+  var de = (q.get('de') || '').replace(/[^a-z0-9_.]/gi, '').slice(0, 24);
   if (de.length >= 3) {
-    document.getElementById('quem').textContent = '@' + de + ' te chamou';
-    document.getElementById('passo2').textContent = 'O app já sabe que foi @' + de + '. É só confirmar.';
+    document.getElementById('quem').textContent = '@' + de + ' convidou você';
+    document.getElementById('passo2').textContent = 'Confirme que foi @' + de + ' que convidou você.';
     var a = document.getElementById('android');
     a.href += '&referrer=' + encodeURIComponent('convite=' + de);
+  }
+  // A cidade de quem convidou: "Santa_Maria-RS" vira "Santa Maria - RS". Só letras, espaço, ponto, apóstrofo e hífen.
+  var c = (q.get('c') || '').slice(0, 60);
+  var m = c.match(/^(.+)-([A-Za-z]{2})$/);
+  var cidade = (m ? m[1] : c).replace(/_/g, ' ').replace(/[^A-Za-zÀ-ÿ .'\-]/g, '').trim();
+  if (cidade.length >= 2) {
+    document.getElementById('titulo').textContent =
+      'Faça parte da colônia de ' + cidade + (m ? ' - ' + m[2].toUpperCase() : '');
   }
 </script>
 </body>
