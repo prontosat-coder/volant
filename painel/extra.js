@@ -1,5 +1,5 @@
 "use strict";
-// Painel VolAnt: Apoios à colônia, Financeiro e Excluir do app (0.30.14).
+// Painel VolAnt: Apoios à colônia, Financeiro, Excluir do app (0.30.14) e Falhas do app (0.30.17).
 // Usa as peças do painel (window.volantPainel) e só chama funções de administrador.
 (() => {
   const P = window.volantPainel;
@@ -334,5 +334,40 @@
     excluir();
   }));
 
-  window.volantExtra = (tela) => ({ apoios, financeiro, excluir })[tela]?.();
+  // ---------- falhas do app (0.30.17) ----------
+  async function falhas() {
+    const onde = q("#listaFalhas");
+    try {
+      const l = await rpc("admin_falhas", {});
+      onde.replaceChildren(...(l.length ? l.map((x) => {
+        const pilha = h("pre", { style: "display:none;white-space:pre-wrap;font-size:12px;margin:8px 0 0" }, x.pilha || "(sem pilha)");
+        const ver = h("button", { class: "bt fino", type: "button" }, "Ver onde quebrou");
+        ver.addEventListener("click", () => {
+          const aberto = pilha.style.display !== "none";
+          pilha.style.display = aberto ? "none" : "block";
+          ver.textContent = aberto ? "Ver onde quebrou" : "Esconder";
+        });
+        return h("div", { class: "it" },
+          h("div", {}, h("b", {}, `${x.tipo} · ${x.vezes} ${x.vezes === 1 ? "vez" : "vezes"}`),
+            h("p", {}, x.mensagem || "—"),
+            h("div", { class: "meta" }, [`versão ${x.versao}`, x.plataforma, x.onde ? `em: ${x.onde}` : "",
+              `primeira ${dataHora(x.primeira_em)}`, `última ${dataHora(x.ultima_em)}`].filter(Boolean).join(" · ")),
+            pilha),
+          h("div", { class: "acoes" }, ver,
+            h("button", { class: "bt vermelho", type: "button", onclick: () => tirarFalha(x) }, "Tirar da lista")));
+      }) : [h("p", { class: "vazio" }, "Nenhuma falha registrada. Bom sinal.")]));
+    } catch (e) {
+      erro(onde, e);
+    }
+  }
+
+  function tirarFalha(x) {
+    abrir(`Tirar da lista: ${x.tipo}?`, h("p", { class: "sub" },
+      "Use quando a falha já foi corrigida. Se acontecer de novo, ela volta para a lista."), "Tirar", async () => {
+      await rpc("admin_apagar_falha", { p_id: x.id });
+      await falhas();
+    });
+  }
+
+  window.volantExtra = (tela) => ({ apoios, financeiro, excluir, falhas })[tela]?.();
 })();
