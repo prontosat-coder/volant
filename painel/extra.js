@@ -1,5 +1,5 @@
 "use strict";
-// Painel VolAnt: Apoios à colônia, Financeiro, Excluir do app (0.30.14) e Falhas do app (0.30.17).
+// Painel VolAnt: Apoios à colônia, Financeiro, Excluir do app (0.30.14) Falhas do app (0.30.17), Assinaturas e Pontos (0.30.18).
 // Usa as peças do painel (window.volantPainel) e só chama funções de administrador.
 (() => {
   const P = window.volantPainel;
@@ -369,5 +369,60 @@
     });
   }
 
-  window.volantExtra = (tela) => ({ apoios, financeiro, excluir, falhas })[tela]?.();
+  // ---------- assinaturas e pontos (0.30.18) ----------
+  const tile = (rotulo, valor) => h("div", { class: "tile" }, h("div", { class: "r" }, rotulo), h("div", { class: "v" }, valor));
+  const nomesDosPlanos = { anual: "Anual", trimestral: "Trimestral", mensal: "Mensal", sem_plano: "Sem plano anotado" };
+
+  async function assinaturas() {
+    const onde = q("#assTiles");
+    try {
+      const a = await rpc("admin_assinaturas", {});
+      q("#assAviso").replaceChildren(h("p", { class: "sub" }, a.ligado
+        ? `Cobrança LIGADA. Tempo grátis no app: ${a.dias_gratis} dias.`
+        : `Cobrança DESLIGADA: todo mundo usa o Pro de graça. Tempo grátis configurado: ${a.dias_gratis} dias.`));
+      onde.replaceChildren(
+        tile("Assinantes ativos", num(a.ativas)),
+        tile("Com preço de fundador", num(a.fundadores)),
+        tile("Novas nos últimos 30 dias", num(a.novas_no_mes)),
+        tile("Não vão renovar", num(a.nao_renovam)),
+        tile("Acabaram nos últimos 30 dias", num(a.acabaram_no_mes)),
+        tile("Contas no VolAnt", num(a.contas)),
+        tile("Contas novas em 30 dias", num(a.contas_novas_no_mes)));
+      const planos = Object.entries(a.por_plano || {});
+      q("#assPlanos").replaceChildren(planos.length
+        ? tabela(["Plano", "Assinantes"], planos.map(([p, n]) => [nomesDosPlanos[p] || p, num(n)]))
+        : h("p", { class: "vazio" }, "Ainda sem assinantes."));
+    } catch (e) {
+      erro(onde, e);
+    }
+  }
+
+  async function pontos() {
+    const onde = q("#listaPontos");
+    try {
+      const l = await rpc("admin_pontos", {});
+      onde.replaceChildren(l.length
+        ? tabela(["Motorista", "Cidade", "Pontos", "Último ponto"], l.map((x) => ["@" + x.nome, x.cidade || "—", num(x.total), dataHora(x.ultimo)]))
+        : h("p", { class: "vazio" }, "Ninguém ganhou pontos ainda."));
+    } catch (e) {
+      erro(onde, e);
+    }
+  }
+
+  function ajustarPontos() {
+    const nome = h("input", { type: "text", placeholder: "@nome_de_usuario" });
+    const quantos = h("input", { type: "number", placeholder: "Ex.: 10 para dar, -10 para tirar" });
+    const nota = h("input", { type: "text", placeholder: "Por quê (fica no histórico do painel)" });
+    abrir("Dar ou tirar pontos", [
+      h("p", { class: "sub" }, "Número positivo dá pontos; negativo tira. O motorista vê como \"Ajuste da VolAnt\"."),
+      campo("Motorista", nome), campo("Pontos", quantos), campo("Anotação", nota),
+    ], "Confirmar", async () => {
+      await rpc("admin_ajustar_pontos", { p_nome: nome.value, p_pontos: parseInt(quantos.value, 10) || 0, p_nota: nota.value });
+      await pontos();
+    });
+  }
+  q("#btAjustarPontos").addEventListener("click", ajustarPontos);
+  Object.assign(frases, { pontos_invalidos: "Informe um número de pontos diferente de zero (até 10.000).", nao_achei: "Não achei esse motorista ou item. Confira o nome." });
+
+  window.volantExtra = (tela) => ({ apoios, financeiro, excluir, falhas, assinaturas, pontos })[tela]?.();
 })();
