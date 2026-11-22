@@ -220,12 +220,22 @@
       const soma = lancamentos.reduce((s, l) => s + Number(l.valor), 0);
       q("#somaPeriodo").textContent = lancamentos.length ? `${lancamentos.length} lançamento(s) no período · ${dinheiro(soma)}` : "";
       onde.replaceChildren(lancamentos.length
-        ? tabela(["Dia", "De quem", "Origem", "Anotação", "Valor"], lancamentos.map((l) => [
-          data(l.recebido_em + "T12:00:00"), l.quem || "—", l.origem === "apoiador" ? "Apoiador" : "Assinatura", l.nota || "—", dinheiro(l.valor)]), [4])
+        ? tabela(["Dia", "De quem", "Origem", "Anotação", "Valor", ""], lancamentos.map((l) => [
+          data(l.recebido_em + "T12:00:00"), l.quem || "—", l.origem === "apoiador" ? "Apoiador" : "Assinatura", l.nota || "—", dinheiro(l.valor),
+          h("button", { class: "bt fino", type: "button", onclick: () => apagarRecebimento(l) }, "Apagar")]), [4])
         : h("p", { class: "vazio" }, "Nenhum recebimento neste período."));
     } catch (e) {
       erro(onde, e);
     }
+  }
+
+  function apagarRecebimento(l) {
+    abrir(`Apagar o recebimento de ${dinheiro(l.valor)}?`, h("p", { class: "sub" },
+      `${l.quem || "Sem nome"} · ${data(l.recebido_em + "T12:00:00")}. Use para corrigir um lançamento errado. Uma cópia fica no histórico do painel.`),
+    "Apagar", async () => {
+      await rpc("admin_apagar_recebimento", { p_id: l.id });
+      await Promise.all([financeiro(), anuncios.length ? apoios() : null]);
+    });
   }
 
   function exportar() {
@@ -246,7 +256,36 @@
   const tipos = { acidente: "Acidente", roubo: "Suspeita de roubo", zona: "Zona segura", alagamento: "Alagamento", bloqueio: "Bloqueio", outro: "Outro", posto: "Posto barato", chamada: "Muita chamada" };
   const vazios = { trilhas: "Nenhuma trilha valendo agora.", postos: "Nenhum posto adicionado por motoristas.", precos: "Nenhum preço informado nos últimos 7 dias.", lixeira: "A lixeira está vazia." };
 
+  // Pontos de recarga: os que estão no app (Excluir, Tirar o preço) e os excluídos (Restaurar).
+  async function recarga() {
+    const onde = q("#listaExcluir");
+    try {
+      const busca = q("#buscaExcluir").value;
+      const [ativos, fora] = await Promise.all([
+        rpc("admin_recarga", { p_busca: busca, p_excluidos: false }), rpc("admin_recarga", { p_busca: busca, p_excluidos: true })]);
+      const acao = (x, oQueFazer, titulo, explica, botao) => () => abrir(titulo, h("p", { class: "sub" }, explica), botao, async () => {
+        await rpc("admin_acao_na_recarga", { p_id: x.id, p_acao: oQueFazer });
+        await recarga();
+      });
+      const linha = (x, excluido) => h("div", { class: "it" },
+        h("div", {}, h("b", {}, x.nome || "Ponto de recarga"),
+          h("p", {}, x.preco == null ? "sem preço" : `${dinheiro(x.preco)} por kWh`),
+          h("div", { class: "meta" }, [x.cidade, x.origem === "motorista" ? "adicionado por motorista" : "do mapa aberto",
+            (excluido ? "Excluído em " : "") + dataHora(x.quando), x.autor ? "@" + x.autor : ""].filter(Boolean).join(" · "))),
+        h("div", { class: "acoes" }, excluido
+          ? h("button", { class: "bt azul", type: "button", onclick: acao(x, "restaurar", `Restaurar: ${x.nome}?`, "Volta para o app como estava.", "Restaurar") }, "Restaurar")
+          : [x.preco == null ? "" : h("button", { class: "bt fino", type: "button", onclick: acao(x, "tirar_preco", `Tirar o preço de ${x.nome}?`, "O ponto continua no app, sem preço, até alguém informar de novo.", "Tirar o preço") }, "Tirar o preço"),
+            h("button", { class: "bt vermelho", type: "button", onclick: acao(x, "excluir", `Excluir: ${x.nome}?`, "Some do app de todos na hora. Dá para restaurar aqui mesmo, mais abaixo.", "Excluir") }, "Excluir")]));
+      onde.replaceChildren(
+        ...(ativos.length ? ativos.map((x) => linha(x, false)) : [h("p", { class: "vazio" }, busca.trim() ? "Nada encontrado com essa busca." : "Nenhum ponto de recarga ainda.")]),
+        ...(fora.length ? [h("h2", { class: "mt", style: "font:700 14px Inter" }, "Excluídos"), ...fora.map((x) => linha(x, true))] : []));
+    } catch (e) {
+      erro(onde, e);
+    }
+  }
+
   async function excluir() {
+    if (oQue === "recarga") return recarga();
     const onde = q("#listaExcluir");
     try {
       const l = await rpc("admin_moderacao", { p_o_que: oQue, p_busca: q("#buscaExcluir").value });
