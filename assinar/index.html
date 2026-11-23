@@ -70,6 +70,11 @@
   .lado { display:flex; gap:10px; }
   .lado .bt { margin-top:4px; min-height:46px; font-size:15px; }
   .bt.vermelho { background:#FF5A5A; border-color:#FF5A5A; }
+  .erro:empty { min-height:0; margin:0; }
+  .duas-col { display:grid; grid-template-columns:1fr 120px; gap:10px; }
+  .duas-col label { margin-top:14px; }
+  .endereco { font-size:13px; color:var(--texto2); margin:8px 2px 0; min-height:18px; }
+  .endereco.ruim { color:var(--vermelho); }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -140,10 +145,19 @@
       <input id="nome" autocomplete="name" required>
       <label for="cpf">CPF <small>(exigido para emitir a cobrança)</small></label>
       <input id="cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required>
+      <div class="duas-col">
+        <div><label for="cep">CEP</label>
+          <input id="cep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9" required></div>
+        <div><label for="numero">Número</label>
+          <input id="numero" autocomplete="address-line2" placeholder="Ex.: 555" maxlength="10" required></div>
+      </div>
+      <p class="endereco" id="endereco" aria-live="polite"></p>
+      <label for="complemento">Complemento <small>(opcional)</small></label>
+      <input id="complemento" autocomplete="off" placeholder="Apto, bloco, sala" maxlength="60">
       <div class="erro" id="erro-plano" role="alert"></div>
       <button class="bt" type="submit" id="botao-plano">Continuar</button>
     </form>
-    <p class="mini">Nome e CPF vão só para o Asaas, que emite a cobrança em nome da Prontosat. A VolAnt guarda só que você é Pro, o plano e até quando. <a href="../privacidade/index.html">Política de privacidade</a></p>
+    <p class="mini">Nome, CPF e endereço vão só para o Asaas, que emite a cobrança e a nota fiscal em nome da Prontosat. A VolAnt guarda só que você é Pro, o plano e até quando. <a href="../privacidade/index.html">Política de privacidade</a></p>
     <button class="link" id="sair-1">Sair desta conta</button>
   </section>
 
@@ -154,6 +168,12 @@
       <p id="pix-texto"></p>
       <div class="qr"><img id="pix-qr" alt="QR Code do Pix"></div>
       <button class="bt leve" id="copiar">Copiar código Pix</button>
+    </div>
+    <div id="pagar-pix-pagina" hidden>
+      <h1>Pague com Pix</h1>
+      <p id="pix-pagina-texto"></p>
+      <a class="bt" id="pix-pagina-link" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Abrir a página de pagamento</a>
+      <p class="mini">A página é do Asaas, que recebe em nome da Prontosat. Depois de pagar, volte para esta aba.</p>
     </div>
     <div id="pagar-cartao" hidden>
       <h1>Pague com cartão</h1>
@@ -224,6 +244,8 @@ function frase(e) {
   if (t.includes('signups not allowed') || t.includes('not found')) return 'Não achei conta com esse e-mail.';
   if (t.includes('cpf')) return 'Esse CPF não confere. Confira os números.';
   if (t.includes('nome')) return 'Escreva o nome completo, com sobrenome.';
+  if (/\bcep\b/.test(t)) return 'Confira o CEP (8 números).';
+  if (t.includes('numero')) return 'Escreva o número do endereço (ou S/N).';
   if (t.includes('asaas_dados')) return 'O Asaas não aceitou o nome ou o CPF. Confira e tente de novo.';
   if (t.includes('sem_conta')) return 'Sua entrada venceu. Entre de novo.';
   const cod = String(e?.erro ?? e?.code ?? '').replace(/[^a-z_0-9]/gi, '').slice(0, 30);
@@ -323,19 +345,41 @@ $('cpf').addEventListener('input', () => {
   const n = $('cpf').value.replace(/\D/g, '').slice(0, 11);
   $('cpf').value = n.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1-$2');
 });
+let cepBuscado = '';
+$('cep').addEventListener('input', async () => {
+  const n = $('cep').value.replace(/\D/g, '').slice(0, 8);
+  $('cep').value = n.length > 5 ? `${n.slice(0, 5)}-${n.slice(5)}` : n;
+  if (n.length !== 8) { $('endereco').textContent = ''; cepBuscado = ''; return; }
+  if (n === cepBuscado) return;
+  cepBuscado = n;
+  $('endereco').classList.remove('ruim'); $('endereco').textContent = 'Procurando o endereço…';
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${n}/json/`);
+    const e = await r.json();
+    if (n !== cepBuscado) return;
+    if (e.erro) { $('endereco').classList.add('ruim'); $('endereco').textContent = 'Não achei esse CEP. Confira os números.'; return; }
+    $('endereco').textContent = [e.logradouro, e.bairro, `${e.localidade}/${e.uf}`].filter(Boolean).join(' · ');
+  } catch (_) { $('endereco').textContent = ''; }
+});
 $('form-plano').addEventListener('submit', async (ev) => {
   ev.preventDefault(); $('erro-plano').textContent = ''; $('botao-plano').disabled = true;
   $('botao-plano').textContent = 'Preparando a cobrança…';
-  const r = await chamar({ acao: 'assinar', plano: escolha.plano, forma: escolha.forma, nome: $('nome').value, cpf: $('cpf').value });
+  const r = await chamar({ acao: 'assinar', plano: escolha.plano, forma: escolha.forma, nome: $('nome').value, cpf: $('cpf').value,
+    cep: $('cep').value, numero: $('numero').value, complemento: $('complemento').value });
   $('botao-plano').disabled = false; $('botao-plano').textContent = 'Continuar';
   if (r.erro === 'ja_assina_pela_loja') return mostrar('passo-loja');
   if (r.erro === 'ja_assina_pelo_site' && r.assinatura) return pronto(r.assinatura);
   if (r.erro || !r.pagar) { $('erro-plano').textContent = frase(r); return; }
   const preco = escolha.plano === 'anual' && fundador ? 'R$ 58,80' : PRECOS[escolha.plano];
   const resumo = `${NOMES[escolha.plano]} · ${preco}.`;
-  $('pagar-pix').hidden = r.pagar.forma !== 'pix';
+  const semQr = r.pagar.forma === 'pix' && r.pagar.sem_qr;
+  $('pagar-pix').hidden = r.pagar.forma !== 'pix' || semQr;
+  $('pagar-pix-pagina').hidden = !semQr;
   $('pagar-cartao').hidden = r.pagar.forma !== 'cartao';
-  if (r.pagar.forma === 'pix') {
+  if (semQr) {
+    $('pix-pagina-texto').textContent = `${resumo} O QR Code não abriu aqui. Pague pela página segura do Asaas: lá aparece o Pix para copiar ou ler com a câmera.`;
+    $('pix-pagina-link').href = r.pagar.link;
+  } else if (r.pagar.forma === 'pix') {
     $('pix-texto').textContent = `${resumo} No app do banco, aponte a câmera ou copie o código. Ao pagar, o banco pergunta se você autoriza o Pix Automático para as próximas renovações.`;
     $('pix-qr').src = `data:image/png;base64,${r.pagar.pix_imagem}`;
     $('copiar').onclick = async () => {
