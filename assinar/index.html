@@ -232,7 +232,7 @@ function mostrar(id) {
   for (const p of PASSOS) $(p).hidden = p !== id;
   const n = { 'passo-entrar': 1, 'passo-codigo': 1, 'passo-plano': 2, 'passo-pagar': 3, 'passo-pronto': 3, 'passo-loja': 3 }[id];
   ['p1', 'p2', 'p3'].forEach((p, i) => $(p).classList.toggle('on', i < n));
-  if (id !== 'passo-pagar' && espera) { clearInterval(espera); espera = null; }
+  if (id !== 'passo-pagar' && espera) { clearTimeout(espera); espera = null; }
   scrollTo(0, 0);
 }
 const data = (iso) => new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
@@ -248,6 +248,7 @@ function frase(e) {
   if (t.includes('numero')) return 'Escreva o número do endereço (ou S/N).';
   if (t.includes('asaas_dados')) return 'O Asaas não aceitou o nome ou o CPF. Confira e tente de novo.';
   if (t.includes('sem_conta')) return 'Sua entrada venceu. Entre de novo.';
+  if (t.includes('aguarde')) return 'Já estamos preparando a sua cobrança. Espere alguns segundos e toque de novo.';
   const cod = String(e?.erro ?? e?.code ?? '').replace(/[^a-z_0-9]/gi, '').slice(0, 30);
   return `Não deu certo agora. Confira a internet e tente de novo.${cod ? ` (código: ${cod})` : ''}`;
 }
@@ -297,16 +298,27 @@ function pronto(a) {
 }
 
 function esperarPagamento() {
-  if (espera) clearInterval(espera);
+  if (espera) clearTimeout(espera);
   let voltas = 0;
-  espera = setInterval(async () => {
+  // Rapido nos 2 primeiros minutos, depois mais devagar (poupa o servidor); para em 30 minutos.
+  const pausa = () => (voltas < 30 ? 4000 : voltas < 60 ? 10000 : 30000);
+  const conferir = async () => {
     voltas++;
-    if (document.hidden && voltas % 3) return; // aba escondida: confere com menos frequência
-    const e = await chamar({ acao: 'estado' });
-    if (e.assinatura?.valendo) { clearInterval(espera); espera = null; pronto(e.assinatura); }
-    if (voltas > 450) { clearInterval(espera); espera = null; $('espera-texto').textContent = 'Já pagou? Recarregue a página para conferir.'; }
-  }, 4000);
+    if (!document.hidden) {
+      const e = await chamar({ acao: 'estado', leve: true });
+      if (e.assinatura?.valendo) { espera = null; pronto(e.assinatura); return; }
+    }
+    if (voltas > 115) { espera = null; $('espera-texto').textContent = 'Já pagou? Recarregue a página para conferir.'; return; }
+    espera = setTimeout(conferir, pausa());
+  };
+  espera = setTimeout(conferir, pausa());
 }
+// Voltou para a aba (depois de pagar no banco ou na pagina do cartao): confere na hora.
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden || !espera) return;
+  const e = await chamar({ acao: 'estado', leve: true });
+  if (e.assinatura?.valendo && espera) { clearTimeout(espera); espera = null; pronto(e.assinatura); }
+});
 
 // --- entrar
 $('form-entrar').addEventListener('submit', async (ev) => {

@@ -170,6 +170,8 @@ async function entrou() {
           expires_in: x.expires_in, expira: x.expires_at * 1000,
         }));
       } catch (_) {}
+      // A sessao do administrador nao fica guardada neste navegador: segue so para o painel (ate fechar a aba).
+      try { localStorage.removeItem('volant-assinar'); } catch (_) {}
       mostrar('passo-painel');
       location.href = '../painel/index.html';
       return;
