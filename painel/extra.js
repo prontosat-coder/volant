@@ -1,5 +1,5 @@
 "use strict";
-// Painel VolAnt: Apoios à colônia, Financeiro, Excluir do app (0.30.14) Falhas do app (0.30.17), Assinaturas e Pontos (0.30.18).
+// Painel VolAnt: Apoios à colônia, Financeiro, Excluir do app (0.30.14) Falhas do app (0.30.17), Assinaturas e Pontos (0.30.18), Liberar Pro e aviso de versão (1.0.0).
 // Usa as peças do painel (window.volantPainel) e só chama funções de administrador.
 (() => {
   const P = window.volantPainel;
@@ -382,12 +382,18 @@
         : `Cobrança DESLIGADA: todo mundo usa o Pro de graça. Tempo grátis configurado: ${a.dias_gratis} dias.`));
       onde.replaceChildren(
         tile("Assinantes ativos", num(a.ativas)),
+        tile("Pela loja", num(a.pela_loja)),
+        tile("Pelo site", num(a.pelo_site)),
+        tile("Liberados no painel", num(a.pelo_painel)),
+        tile("No tempo grátis", num(a.no_tempo_gratis)),
         tile("Com preço de fundador", num(a.fundadores)),
         tile("Novas nos últimos 30 dias", num(a.novas_no_mes)),
         tile("Não vão renovar", num(a.nao_renovam)),
         tile("Acabaram nos últimos 30 dias", num(a.acabaram_no_mes)),
         tile("Contas no VolAnt", num(a.contas)),
         tile("Contas novas em 30 dias", num(a.contas_novas_no_mes)));
+      await liberados();
+      await versao();
       const planos = Object.entries(a.por_plano || {});
       q("#assPlanos").replaceChildren(planos.length
         ? tabela(["Plano", "Assinantes"], planos.map(([p, n]) => [nomesDosPlanos[p] || p, num(n)]))
@@ -396,6 +402,74 @@
       erro(onde, e);
     }
   }
+
+  const nomesDoPeriodo = { mensal: "1 mês", trimestral: "3 meses", anual: "12 meses" };
+  async function liberados() {
+    const onde = q("#assLiberados");
+    try {
+      const l = await rpc("admin_liberados", {});
+      onde.replaceChildren(l.length
+        ? tabela(["Motorista", "Período", "Até", "Anotação", ""], l.map((x) => [
+            "@" + x.nome, nomesDoPeriodo[x.plano] || x.plano, data(x.ate), x.nota || "—",
+            x.valendo ? h("button", { class: "bt fino", type: "button", onclick: () => tirarPro(x) }, "Tirar") : "Acabou"]))
+        : h("p", { class: "vazio" }, "Nenhum Pro liberado no painel."));
+    } catch (e) {
+      erro(onde, e);
+    }
+  }
+
+  function liberarPro() {
+    const quem = h("input", { type: "text", placeholder: "@nome_de_usuario ou e-mail" });
+    let meses = 3;
+    const botoes = [1, 3, 12].map((m) => {
+      const b = h("button", { class: m === meses ? "bt azul" : "bt fino", type: "button" }, m === 1 ? "1 mês" : `${m} meses`);
+      b.addEventListener("click", () => {
+        meses = m;
+        botoes.forEach((x, i) => (x.className = [1, 3, 12][i] === m ? "bt azul" : "bt fino"));
+      });
+      return b;
+    });
+    const nota = h("input", { type: "text", placeholder: "Ex.: Pix 22/11 · R$ 29,70" });
+    abrir("Liberar Pro", [
+      h("p", { class: "sub" }, "Se a pessoa já tem Pro liberado valendo, o período novo começa no fim do atual."),
+      campo("Motorista", quem), campo("Período", h("div", { class: "linha" }, ...botoes)), campo("Anotação", nota),
+    ], "Liberar Pro", async () => {
+      await rpc("admin_liberar_pro", { p_quem: quem.value, p_meses: meses, p_nota: nota.value });
+      await assinaturas();
+    });
+  }
+
+  function tirarPro(x) {
+    abrir(`Tirar o Pro de @${x.nome}?`, h("p", { class: "sub" },
+      "O Pro liberado no painel acaba agora. Se a pessoa ainda estiver no tempo grátis, continua com ele."), "Tirar", async () => {
+      await rpc("admin_tirar_pro", { p_token: x.token });
+      await assinaturas();
+    });
+  }
+
+  async function versao() {
+    const onde = q("#assVersao");
+    try {
+      const atual = await rpc("aviso_de_versao", {});
+      const ent = h("input", { type: "text", placeholder: "Ex.: 1.0.0", value: atual || "" });
+      const salvar = h("button", { class: "bt azul", type: "button" }, "Salvar");
+      const ok = h("p", { class: "sub" }, atual ? `Hoje: avisa quem tiver abaixo de ${atual}.` : "Hoje: ninguém vê o aviso.");
+      salvar.addEventListener("click", async () => {
+        salvar.disabled = true;
+        try {
+          await rpc("admin_versao_minima", { p_versao: ent.value });
+          await versao();
+        } catch (e) {
+          ok.textContent = dizer(e);
+          salvar.disabled = false;
+        }
+      });
+      onde.replaceChildren(h("div", { class: "linha" }, ent, salvar), ok);
+    } catch (e) {
+      erro(onde, e);
+    }
+  }
+  q("#btLiberarPro").addEventListener("click", liberarPro);
 
   async function pontos() {
     const onde = q("#listaPontos");
@@ -422,6 +496,7 @@
     });
   }
   q("#btAjustarPontos").addEventListener("click", ajustarPontos);
+  Object.assign(frases, { periodo_invalido: "Escolha 1, 3 ou 12 meses.", versao_invalida: "Use o formato 1.0.0 (três números com ponto)." });
   Object.assign(frases, { pontos_invalidos: "Informe um número de pontos diferente de zero (até 10.000).", nao_achei: "Não achei esse motorista ou item. Confira o nome." });
 
   window.volantExtra = (tela) => ({ apoios, financeiro, excluir, falhas, assinaturas, pontos })[tela]?.();
