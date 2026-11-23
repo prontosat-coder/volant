@@ -197,7 +197,7 @@
       <span id="pronto-proxima"></span>
       <button class="link perigo" id="cancelar" hidden>Cancelar a renovação</button>
       <div class="confirma" id="confirma-cancelar" hidden>
-        <p>Parar de renovar? O Pro continua até <strong id="cancelar-ate"></strong>.</p>
+        <p>Parar de renovar? O Pro continua até <strong id="cancelar-ate"></strong>.<span id="cancelar-pix" hidden> No Pix, para voltar depois é só assinar de novo aqui e autorizar o Pix Automático no banco outra vez.</span></p>
         <div class="lado">
           <button class="bt vermelho" id="cancelar-sim">Parar de renovar</button>
           <button class="bt leve" id="cancelar-nao">Manter</button>
@@ -309,6 +309,8 @@ function pronto(a) {
   $('cancelar').hidden = !a.renova;
   $('confirma-cancelar').hidden = true;
   $('cancelar-ate').textContent = data(a.expira_em);
+  // Pix: cancelar corta a autorização do Pix Automático; para voltar é preciso assinar de novo.
+  $('cancelar-pix').hidden = a.forma !== 'pix';
   $('renovar').hidden = !podeRenovar;
   $('confirma-renovar').hidden = true;
   if (podeRenovar) {
