@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VolAnt · Assine o VolAnt Pro</title>
+<meta name="robots" content="noindex"><!-- tirar o noindex quando ligar a cobrança de verdade -->
+<meta name="description" content="Assine o VolAnt Pro com Pix Automático ou cartão. Mesmos preços do app.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<style>
+  @font-face { font-family: "Space Grotesk"; src: url(../fontes/SpaceGrotesk-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+  @font-face { font-family: Inter; src: url(../fontes/Inter-400.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: Inter; src: url(../fontes/Inter-600.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+  :root { --fundo:#0E1B2E; --cartao:#16263D; --linha:#24364F; --azul:#3D9BFF; --link:#8CC4FF;
+          --texto:#F2F6FB; --texto2:#C5D2E3; --texto3:#9FB0C6; --vermelho:#FF8A8A; --verde:#2FD27A; --ouro:#FFD24A; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--fundo); color:var(--texto); font:16px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:440px; margin:0 auto; padding:24px 20px 48px; }
+  .topo { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+  .topo a { display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; font:700 22px "Space Grotesk",Inter,sans-serif; }
+  .topo img { width:32px; height:32px; }
+  .passos { margin-left:auto; display:flex; gap:5px; }
+  .passos i { width:22px; height:5px; border-radius:9px; background:var(--linha); }
+  .passos i.on { background:var(--azul); }
+  h1 { font:700 26px/1.2 "Space Grotesk",Inter,sans-serif; margin:4px 0 8px; }
+  p { color:var(--texto2); margin:0 0 16px; font-size:15px; }
+  .c { text-align:center; }
+  label { display:block; font-size:13px; font-weight:600; color:var(--texto3); margin:14px 0 6px; }
+  label small { font-weight:400; }
+  input { width:100%; height:50px; border-radius:14px; border:2px solid var(--linha); background:var(--cartao);
+          color:var(--texto); font-size:16px; padding:0 16px; outline:none; }
+  input:focus { border-color:var(--link); }
+  button { font-family:inherit; }
+  .bt { width:100%; min-height:52px; border-radius:999px; border:2px solid var(--azul); background:var(--azul);
+        color:var(--fundo); font-weight:600; font-size:16px; cursor:pointer; margin-top:18px; }
+  .bt[disabled] { opacity:.5; cursor:default; }
+  .bt.leve { background:transparent; color:var(--link); border-color:var(--linha); margin-top:12px; }
+  .link { display:block; margin:6px auto 0; color:var(--link); font-weight:600; background:none; border:0; padding:12px; font-size:14px; cursor:pointer; }
+  .erro { color:var(--vermelho); font-weight:600; font-size:14px; min-height:20px; margin:10px 0 0; }
+  .mini { color:var(--texto3); font-size:13px; line-height:1.45; margin-top:16px; }
+  .mini a, p a { color:var(--link); font-weight:600; }
+  .ola { color:var(--texto2); font-size:14px; margin:0 0 12px; }
+  .opcao { width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center; gap:12px;
+           background:var(--cartao); color:var(--texto); border:2px solid var(--linha); border-radius:16px;
+           padding:12px 14px; margin-bottom:8px; cursor:pointer; font-size:15px; }
+  .opcao[aria-checked="true"] { border-color:var(--azul); }
+  .opcao b { display:block; font-size:15px; }
+  .opcao .eco { font-size:12.5px; color:var(--verde); font-weight:600; }
+  .opcao .fund { font-size:12.5px; color:var(--ouro); font-weight:600; }
+  .opcao .det { display:block; font-size:12.5px; color:var(--texto3); font-weight:400; margin-top:2px; }
+  .preco { text-align:right; font:700 18px "Space Grotesk",Inter,sans-serif; white-space:nowrap; }
+  .preco s { display:block; font:400 12px Inter,sans-serif; color:var(--texto3); }
+  .preco em { display:block; font:400 11.5px Inter,sans-serif; font-style:normal; color:var(--texto3); }
+  .qr { background:#fff; border-radius:18px; padding:14px; width:240px; height:240px; margin:6px auto 0; }
+  .qr img { width:100%; height:100%; display:block; image-rendering:pixelated; }
+  .espera { display:flex; align-items:center; justify-content:center; gap:10px; color:var(--texto2); font-size:14px; margin-top:16px; }
+  .pulso { width:10px; height:10px; border-radius:50%; background:var(--azul); animation:p 1.4s infinite; }
+  @keyframes p { 0% { box-shadow:0 0 0 0 rgba(61,155,255,.5); } 100% { box-shadow:0 0 0 12px rgba(61,155,255,0); } }
+  @media (prefers-reduced-motion: reduce) { .pulso { animation:none; box-shadow:0 0 0 5px rgba(61,155,255,.25); } }
+  .feito { width:76px; height:76px; border-radius:50%; background:rgba(47,210,122,.15); border:3px solid var(--verde);
+           color:var(--verde); font-size:40px; display:grid; place-items:center; margin:36px auto 16px; }
+  .caixa { background:var(--cartao); border:2px solid var(--linha); border-radius:16px; padding:14px 16px; margin-top:24px; }
+  .caixa b { display:block; margin-bottom:4px; }
+  .caixa span { display:block; font-size:13.5px; color:var(--texto3); }
+  .caixa .perigo { color:var(--vermelho); padding:12px 0 0; margin:0; }
+  .caixa .confirma { margin-top:12px; padding-top:12px; border-top:1px solid var(--linha); }
+  .caixa .confirma p { font-size:14px; margin-bottom:8px; }
+  .lado { display:flex; gap:10px; }
+  .lado .bt { margin-top:4px; min-height:46px; font-size:15px; }
+  .bt.vermelho { background:#FF5A5A; border-color:#FF5A5A; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="topo">
+    <a href="../index.html"><img src="../img/simbolo.svg" alt="">VolAnt</a>
+    <span class="passos" aria-hidden="true"><i id="p1" class="on"></i><i id="p2"></i><i id="p3"></i></span>
+  </div>
+
+  <!-- 1) entrar -->
+  <section id="passo-entrar">
+    <h1>Assine o VolAnt Pro</h1>
+    <p>Entre com o mesmo e-mail e senha que você usa no app. O Pro libera na sua conta assim que o pagamento cair.</p>
+    <form id="form-entrar">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password" required>
+      <div class="erro" id="erro-entrar" role="alert"></div>
+      <button class="bt" type="submit" id="botao-entrar">Entrar</button>
+    </form>
+    <button class="link" id="esqueci">Esqueci a senha: entrar com um código no e-mail</button>
+    <p class="mini">Ainda não tem conta? Baixe o VolAnt na <a href="https://play.google.com/store/apps/details?id=br.com.volant.app">Play Store</a> ou na <a href="https://apps.apple.com/br/app/id6836894723">App Store</a> e crie a sua.</p>
+  </section>
+
+  <!-- 1b) codigo por e-mail -->
+  <section id="passo-codigo" hidden>
+    <h1>Código no e-mail</h1>
+    <p id="codigo-texto">Mandamos um código de 6 números.</p>
+    <form id="form-codigo">
+      <label for="codigo">Código</label>
+      <input id="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+      <div class="erro" id="erro-codigo" role="alert"></div>
+      <button class="bt" type="submit" id="botao-codigo">Confirmar</button>
+    </form>
+    <button class="link" id="voltar-codigo">Voltar</button>
+  </section>
+
+  <!-- 2) plano e forma -->
+  <section id="passo-plano" hidden>
+    <p class="ola" id="ola"></p>
+    <div role="radiogroup" aria-label="Plano" id="planos">
+      <button class="opcao" role="radio" aria-checked="true" data-plano="anual">
+        <span><b>Anual</b><span class="eco" id="anual-eco">R$ 5,83 por mês</span><span class="fund" id="anual-fund" hidden>Preço de fundador</span></span>
+        <span class="preco"><s id="anual-de" hidden>R$ 69,90</s><span id="anual-preco">R$ 69,90</span><em>por ano</em></span>
+      </button>
+      <button class="opcao" role="radio" aria-checked="false" data-plano="trimestral">
+        <span><b>Trimestral</b><span class="eco">R$ 9,90 por mês</span></span>
+        <span class="preco">R$ 29,70<em>a cada 3 meses</em></span>
+      </button>
+      <button class="opcao" role="radio" aria-checked="false" data-plano="mensal">
+        <span><b>Mensal</b></span>
+        <span class="preco">R$ 11,90<em>por mês</em></span>
+      </button>
+    </div>
+    <label id="rotulo-forma">Como pagar</label>
+    <div role="radiogroup" aria-labelledby="rotulo-forma" id="formas">
+      <button class="opcao" role="radio" aria-checked="true" data-forma="pix">
+        <span><b>Pix Automático</b><span class="det">Você autoriza uma vez no app do banco e ele renova sozinho. Cancela quando quiser.</span></span>
+      </button>
+      <button class="opcao" role="radio" aria-checked="false" data-forma="cartao">
+        <span><b>Cartão de crédito</b><span class="det">Renova sozinho no cartão.</span></span>
+      </button>
+    </div>
+    <form id="form-plano">
+      <label for="nome">Nome completo</label>
+      <input id="nome" autocomplete="name" required>
+      <label for="cpf">CPF <small>(exigido para emitir a cobrança)</small></label>
+      <input id="cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required>
+      <div class="erro" id="erro-plano" role="alert"></div>
+      <button class="bt" type="submit" id="botao-plano">Continuar</button>
+    </form>
+    <p class="mini">Nome e CPF vão só para o Asaas, que emite a cobrança em nome da Prontosat. A VolAnt guarda só que você é Pro, o plano e até quando. <a href="../privacidade/index.html">Política de privacidade</a></p>
+    <button class="link" id="sair-1">Sair desta conta</button>
+  </section>
+
+  <!-- 3) pagar -->
+  <section id="passo-pagar" hidden>
+    <div id="pagar-pix">
+      <h1>Pague com Pix</h1>
+      <p id="pix-texto"></p>
+      <div class="qr"><img id="pix-qr" alt="QR Code do Pix"></div>
+      <button class="bt leve" id="copiar">Copiar código Pix</button>
+    </div>
+    <div id="pagar-cartao" hidden>
+      <h1>Pague com cartão</h1>
+      <p id="cartao-texto"></p>
+      <a class="bt" id="cartao-link" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Abrir a página segura do cartão</a>
+      <p class="mini">Os dados do cartão são digitados na página do Asaas e não passam pela VolAnt. Depois de pagar, volte para esta aba.</p>
+    </div>
+    <p class="espera"><span class="pulso"></span><span id="espera-texto">Esperando o pagamento…</span></p>
+    <div class="erro" id="erro-pagar" role="alert"></div>
+    <button class="link" id="trocar">Trocar o plano ou a forma de pagar</button>
+  </section>
+
+  <!-- 4) assinante -->
+  <section id="passo-pronto" hidden>
+    <div class="feito" aria-hidden="true">✓</div>
+    <h1 class="c">Você é VolAnt Pro</h1>
+    <p class="c" id="pronto-resumo"></p>
+    <p class="c">Abra o app: o Pro já aparece na sua conta.</p>
+    <div class="caixa" id="caixa-assinatura">
+      <b>Sua assinatura</b>
+      <span id="pronto-proxima"></span>
+      <button class="link perigo" id="cancelar" hidden>Cancelar a renovação</button>
+      <div class="confirma" id="confirma-cancelar" hidden>
+        <p>Parar de renovar? O Pro continua até <strong id="cancelar-ate"></strong>.</p>
+        <div class="lado">
+          <button class="bt vermelho" id="cancelar-sim">Parar de renovar</button>
+          <button class="bt leve" id="cancelar-nao">Manter</button>
+        </div>
+      </div>
+      <div class="erro" id="erro-cancelar" role="alert"></div>
+    </div>
+    <button class="link" id="sair-2">Sair desta conta</button>
+  </section>
+
+  <!-- 4b) ja assina pela loja -->
+  <section id="passo-loja" hidden>
+    <h1>Você já é VolAnt Pro</h1>
+    <p>A sua assinatura é pela loja do celular (Google Play ou App Store). Para trocar ou cancelar, use a loja. Não precisa assinar de novo aqui.</p>
+    <button class="link" id="sair-3">Sair desta conta</button>
+  </section>
+</main>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const s = createClient('https://hcmpksakeaknjmqbbmjp.supabase.co', 'sb_publishable_BAfygJ01KLoApRODYIOjtg_jf6L0vee',
+  { auth: { persistSession: true, storageKey: 'volant-assinar' } });
+const $ = (id) => document.getElementById(id);
+const PASSOS = ['passo-entrar', 'passo-codigo', 'passo-plano', 'passo-pagar', 'passo-pronto', 'passo-loja'];
+const NOMES = { anual: 'Anual', trimestral: 'Trimestral', mensal: 'Mensal' };
+const PRECOS = { anual: 'R$ 69,90', trimestral: 'R$ 29,70', mensal: 'R$ 11,90' };
+let escolha = { plano: 'anual', forma: 'pix' };
+let fundador = false;
+let espera = null;
+
+function mostrar(id) {
+  for (const p of PASSOS) $(p).hidden = p !== id;
+  const n = { 'passo-entrar': 1, 'passo-codigo': 1, 'passo-plano': 2, 'passo-pagar': 3, 'passo-pronto': 3, 'passo-loja': 3 }[id];
+  ['p1', 'p2', 'p3'].forEach((p, i) => $(p).classList.toggle('on', i < n));
+  if (id !== 'passo-pagar' && espera) { clearInterval(espera); espera = null; }
+  scrollTo(0, 0);
+}
+const data = (iso) => new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+function frase(e) {
+  const t = `${e?.code ?? ''} ${e?.message ?? ''} ${e?.erro ?? ''}`.toLowerCase();
+  if (t.includes('invalid_credentials') || t.includes('invalid login')) return 'E-mail ou senha não conferem.';
+  if (t.includes('expired') || t.includes('otp')) return 'Código errado ou vencido.';
+  if (t.includes('rate') || t.includes('429') || t.includes('security')) return 'Muitas tentativas. Espere um minuto.';
+  if (t.includes('signups not allowed') || t.includes('not found')) return 'Não achei conta com esse e-mail.';
+  if (t.includes('cpf')) return 'Esse CPF não confere. Confira os números.';
+  if (t.includes('nome')) return 'Escreva o nome completo, com sobrenome.';
+  if (t.includes('asaas_dados')) return 'O Asaas não aceitou o nome ou o CPF. Confira e tente de novo.';
+  if (t.includes('sem_conta')) return 'Sua entrada venceu. Entre de novo.';
+  return 'Não deu certo agora. Confira a internet e tente de novo.';
+}
+async function chamar(corpo) {
+  const { data: d, error } = await s.functions.invoke('asaas', { body: corpo });
+  if (!error) return d;
+  let j = {};
+  try { j = await error.context.json(); } catch (_) {}
+  return { erro: j.erro ?? 'falha', ...j };
+}
+
+async function entrou() {
+  let nome = '';
+  try { const r = await s.rpc('meu_nome'); nome = r.data?.nome ? `@${r.data.nome}` : ''; } catch (_) {}
+  const { data: eu } = await s.auth.getUser();
+  $('ola').textContent = `Olá, ${nome || eu.user?.email || ''}`;
+  await atualizar();
+}
+
+async function atualizar() {
+  const e = await chamar({ acao: 'estado' });
+  if (e.erro === 'sem_conta') { await s.auth.signOut({ scope: 'local' }); return mostrar('passo-entrar'); }
+  if (e.erro) { $('erro-entrar').textContent = frase(e); return mostrar('passo-entrar'); }
+  if (e.pela_loja) return mostrar('passo-loja');
+  const a = e.assinatura;
+  if (a?.valendo) return pronto(a);
+  fundador = !!e.fundador_disponivel;
+  $('anual-fund').hidden = !fundador;
+  $('anual-eco').hidden = fundador;
+  $('anual-de').hidden = !fundador;
+  $('anual-preco').textContent = fundador ? 'R$ 58,80' : 'R$ 69,90';
+  mostrar('passo-plano');
+}
+
+function pronto(a) {
+  const plano = NOMES[a.plano] ?? 'VolAnt Pro';
+  $('pronto-resumo').textContent = `${plano} · até ${data(a.expira_em)}${a.renova ? ' · renova sozinho' : ''}.`;
+  $('pronto-proxima').textContent = a.renova
+    ? `Próxima renovação: ${data(a.expira_em)}. Cancele quando quiser.`
+    : `Não renova: o Pro vai até ${data(a.expira_em)}. Para continuar depois, é só assinar de novo aqui.`;
+  $('cancelar').hidden = !a.renova;
+  $('confirma-cancelar').hidden = true;
+  $('cancelar-ate').textContent = data(a.expira_em);
+  mostrar('passo-pronto');
+}
+
+function esperarPagamento() {
+  if (espera) clearInterval(espera);
+  let voltas = 0;
+  espera = setInterval(async () => {
+    voltas++;
+    if (document.hidden && voltas % 3) return; // aba escondida: confere com menos frequência
+    const e = await chamar({ acao: 'estado' });
+    if (e.assinatura?.valendo) { clearInterval(espera); espera = null; pronto(e.assinatura); }
+    if (voltas > 450) { clearInterval(espera); espera = null; $('espera-texto').textContent = 'Já pagou? Recarregue a página para conferir.'; }
+  }, 4000);
+}
+
+// --- entrar
+$('form-entrar').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); $('erro-entrar').textContent = ''; $('botao-entrar').disabled = true;
+  const { error } = await s.auth.signInWithPassword({ email: $('email').value.trim().toLowerCase(), password: $('senha').value });
+  $('botao-entrar').disabled = false;
+  if (error) $('erro-entrar').textContent = frase(error); else { $('senha').value = ''; await entrou(); }
+});
+$('esqueci').addEventListener('click', async () => {
+  const email = $('email').value.trim().toLowerCase();
+  if (!email) { $('erro-entrar').textContent = 'Escreva o seu e-mail primeiro.'; return; }
+  const { error } = await s.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  if (error) { $('erro-entrar').textContent = frase(error); return; }
+  $('codigo-texto').textContent = `Mandamos um código de 6 números para ${email}.`;
+  mostrar('passo-codigo');
+});
+$('form-codigo').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); $('botao-codigo').disabled = true;
+  const { error } = await s.auth.verifyOtp({ email: $('email').value.trim().toLowerCase(), token: $('codigo').value.trim(), type: 'email' });
+  $('botao-codigo').disabled = false;
+  if (error) $('erro-codigo').textContent = frase(error); else await entrou();
+});
+$('voltar-codigo').addEventListener('click', () => mostrar('passo-entrar'));
+
+// --- escolher
+function marcar(grupo, attr, valor) {
+  for (const b of $(grupo).querySelectorAll('[role=radio]')) b.setAttribute('aria-checked', String(b.dataset[attr] === valor));
+}
+$('planos').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-plano]'); if (!b) return;
+  escolha.plano = b.dataset.plano; marcar('planos', 'plano', escolha.plano);
+});
+$('formas').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-forma]'); if (!b) return;
+  escolha.forma = b.dataset.forma; marcar('formas', 'forma', escolha.forma);
+});
+$('cpf').addEventListener('input', () => {
+  const n = $('cpf').value.replace(/\D/g, '').slice(0, 11);
+  $('cpf').value = n.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1-$2');
+});
+$('form-plano').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); $('erro-plano').textContent = ''; $('botao-plano').disabled = true;
+  $('botao-plano').textContent = 'Preparando a cobrança…';
+  const r = await chamar({ acao: 'assinar', plano: escolha.plano, forma: escolha.forma, nome: $('nome').value, cpf: $('cpf').value });
+  $('botao-plano').disabled = false; $('botao-plano').textContent = 'Continuar';
+  if (r.erro === 'ja_assina_pela_loja') return mostrar('passo-loja');
+  if (r.erro === 'ja_assina_pelo_site' && r.assinatura) return pronto(r.assinatura);
+  if (r.erro || !r.pagar) { $('erro-plano').textContent = frase(r); return; }
+  const preco = escolha.plano === 'anual' && fundador ? 'R$ 58,80' : PRECOS[escolha.plano];
+  const resumo = `${NOMES[escolha.plano]} · ${preco}.`;
+  $('pagar-pix').hidden = r.pagar.forma !== 'pix';
+  $('pagar-cartao').hidden = r.pagar.forma !== 'cartao';
+  if (r.pagar.forma === 'pix') {
+    $('pix-texto').textContent = `${resumo} No app do banco, aponte a câmera ou copie o código. Ao pagar, o banco pergunta se você autoriza o Pix Automático para as próximas renovações.`;
+    $('pix-qr').src = `data:image/png;base64,${r.pagar.pix_imagem}`;
+    $('copiar').onclick = async () => {
+      try { await navigator.clipboard.writeText(r.pagar.pix_copia_e_cola); $('copiar').textContent = 'Código copiado ✓'; }
+      catch (_) { $('copiar').textContent = 'Não deu para copiar'; }
+      setTimeout(() => { $('copiar').textContent = 'Copiar código Pix'; }, 2500);
+    };
+  } else {
+    $('cartao-texto').textContent = `${resumo} Você vai para a página segura do Asaas para digitar o cartão. A renovação depois é sozinha.`;
+    $('cartao-link').href = r.pagar.link;
+  }
+  $('espera-texto').textContent = 'Esperando o pagamento…';
+  mostrar('passo-pagar');
+  if (r.pagar.forma === 'cartao') window.open(r.pagar.link, '_blank', 'noopener');
+  esperarPagamento();
+});
+$('trocar').addEventListener('click', () => mostrar('passo-plano'));
+
+// --- cancelar
+$('cancelar').addEventListener('click', () => { $('confirma-cancelar').hidden = false; $('cancelar').hidden = true; });
+$('cancelar-nao').addEventListener('click', () => { $('confirma-cancelar').hidden = true; $('cancelar').hidden = false; });
+$('cancelar-sim').addEventListener('click', async () => {
+  $('cancelar-sim').disabled = true; $('erro-cancelar').textContent = '';
+  const r = await chamar({ acao: 'cancelar' });
+  $('cancelar-sim').disabled = false;
+  if (r.erro) { $('erro-cancelar').textContent = frase(r); return; }
+  await atualizar();
+});
+
+// --- sair
+for (const id of ['sair-1', 'sair-2', 'sair-3']) {
+  $(id).addEventListener('click', async () => { await s.auth.signOut({ scope: 'local' }); mostrar('passo-entrar'); });
+}
+
+// Já entrou antes nesta aba/navegador: continua de onde parou.
+const { data: sessao } = await s.auth.getSession();
+if (sessao.session) await entrou();
+</script>
+</body>
+</html>
