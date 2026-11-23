@@ -203,6 +203,14 @@
           <button class="bt leve" id="cancelar-nao">Manter</button>
         </div>
       </div>
+      <button class="bt" id="renovar" hidden style="margin-top:12px">Voltar a renovar</button>
+      <div class="confirma" id="confirma-renovar" hidden>
+        <p id="renovar-texto"></p>
+        <div class="lado">
+          <button class="bt" id="renovar-sim">Voltar a renovar</button>
+          <button class="bt leve" id="renovar-nao">Agora não</button>
+        </div>
+      </div>
       <div class="erro" id="erro-cancelar" role="alert"></div>
     </div>
     <button class="link" id="sair-2">Sair desta conta</button>
@@ -248,6 +256,7 @@ function frase(e) {
   if (t.includes('numero')) return 'Escreva o número do endereço (ou S/N).';
   if (t.includes('asaas_dados')) return 'O Asaas não aceitou o nome ou o CPF. Confira e tente de novo.';
   if (t.includes('sem_conta')) return 'Sua entrada venceu. Entre de novo.';
+  if (t.includes('assinar_de_novo')) return 'Esta assinatura não dá para retomar. Quando o Pro acabar, é só assinar de novo aqui.';
   if (t.includes('aguarde')) return 'Já estamos preparando a sua cobrança. Espere alguns segundos e toque de novo.';
   const cod = String(e?.erro ?? e?.code ?? '').replace(/[^a-z_0-9]/gi, '').slice(0, 30);
   return `Não deu certo agora. Confira a internet e tente de novo.${cod ? ` (código: ${cod})` : ''}`;
@@ -283,17 +292,30 @@ async function atualizar() {
   mostrar('passo-plano');
 }
 
+let acabouDeRenovar = false;
 function pronto(a) {
   const plano = NOMES[a.plano] ?? 'VolAnt Pro';
+  // Cancelou e ainda vale: pode voltar a renovar sem pagar agora.
+  const podeRenovar = !a.renova && a.valendo && a.estado === 'cancelada' && !!a.proxima_cobranca;
   // Renovando sozinho, nao lembra nada (ja foi avisado ao assinar). Sem renovar, mostra ate quando vale.
   $('pronto-resumo').textContent = a.renova ? `${plano}.` : `${plano} · até ${data(a.expira_em)}.`;
   $('pronto-proxima').textContent = a.renova
-    ? ''
-    : `Não renova: o Pro vai até ${data(a.expira_em)}. Para continuar depois, é só assinar de novo aqui.`;
-  $('pronto-proxima').hidden = a.renova;
+    ? (acabouDeRenovar ? 'Renovação ligada de novo. Nada foi cobrado agora.' : '')
+    : podeRenovar
+      ? `Não renova: o Pro vai até ${data(a.expira_em)}.`
+      : `Não renova: o Pro vai até ${data(a.expira_em)}. Para continuar depois, é só assinar de novo aqui.`;
+  $('pronto-proxima').hidden = a.renova && !acabouDeRenovar;
+  acabouDeRenovar = false;
   $('cancelar').hidden = !a.renova;
   $('confirma-cancelar').hidden = true;
   $('cancelar-ate').textContent = data(a.expira_em);
+  $('renovar').hidden = !podeRenovar;
+  $('confirma-renovar').hidden = true;
+  if (podeRenovar) {
+    const [ano, mes, dia] = a.proxima_cobranca.split('-');
+    $('renovar-texto').textContent = `Voltar a renovar o ${plano}? Nada é cobrado agora. ` +
+      `A próxima cobrança é em ${dia}/${mes}/${ano}, no mesmo valor de antes.`;
+  }
   mostrar('passo-pronto');
 }
 
@@ -420,6 +442,17 @@ $('cancelar-sim').addEventListener('click', async () => {
   const r = await chamar({ acao: 'cancelar' });
   $('cancelar-sim').disabled = false;
   if (r.erro) { $('erro-cancelar').textContent = frase(r); return; }
+  await atualizar();
+});
+
+$('renovar').addEventListener('click', () => { $('confirma-renovar').hidden = false; $('renovar').hidden = true; });
+$('renovar-nao').addEventListener('click', () => { $('confirma-renovar').hidden = true; $('renovar').hidden = false; });
+$('renovar-sim').addEventListener('click', async () => {
+  $('renovar-sim').disabled = true; $('erro-cancelar').textContent = '';
+  const r = await chamar({ acao: 'renovar' });
+  $('renovar-sim').disabled = false;
+  if (r.erro && r.erro !== 'nada_para_renovar') { $('erro-cancelar').textContent = frase(r); return; }
+  acabouDeRenovar = !r.erro;
   await atualizar();
 });
 
