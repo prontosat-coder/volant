@@ -193,7 +193,7 @@ async function cartaoPro() {
     c.replaceChildren(tit(true), el('p', {}, 'Você é Pro pela loja do celular (Google Play ou App Store). Para trocar ou cancelar, use a loja.'));
   } else if (a?.valendo) {
     c.replaceChildren(tit(true),
-      el('p', {}, `${NOMES[a.plano] ?? ''} · até ${data(a.expira_em)} · ${a.renova ? 'renova sozinho' : 'não renova'}.`),
+      el('p', {}, a.renova ? `${NOMES[a.plano] ?? 'VolAnt Pro'}.` : `${NOMES[a.plano] ?? ''} · até ${data(a.expira_em)} · não renova.`),
       el('a', { class: 'bt leve', href: '../assinar/index.html', style: 'display:grid;place-items:center;text-decoration:none' }, 'Ver a assinatura'));
   } else {
     c.replaceChildren(tit(false),

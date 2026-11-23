@@ -284,10 +284,12 @@ async function atualizar() {
 
 function pronto(a) {
   const plano = NOMES[a.plano] ?? 'VolAnt Pro';
-  $('pronto-resumo').textContent = `${plano} · até ${data(a.expira_em)}${a.renova ? ' · renova sozinho' : ''}.`;
+  // Renovando sozinho, nao lembra nada (ja foi avisado ao assinar). Sem renovar, mostra ate quando vale.
+  $('pronto-resumo').textContent = a.renova ? `${plano}.` : `${plano} · até ${data(a.expira_em)}.`;
   $('pronto-proxima').textContent = a.renova
-    ? `Próxima renovação: ${data(a.expira_em)}. Cancele quando quiser.`
+    ? ''
     : `Não renova: o Pro vai até ${data(a.expira_em)}. Para continuar depois, é só assinar de novo aqui.`;
+  $('pronto-proxima').hidden = a.renova;
   $('cancelar').hidden = !a.renova;
   $('confirma-cancelar').hidden = true;
   $('cancelar-ate').textContent = data(a.expira_em);
