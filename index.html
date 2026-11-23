@@ -300,6 +300,9 @@
   .placar .exemplo { font-size: 12px; color: var(--texto3); margin-top: 10px; }
   @media (max-width: 900px) { .vitrine { grid-template-columns: 1fr; padding: 26px 20px; } .calc { grid-template-columns: 1fr 1fr; } .calc label:last-child { grid-column: span 2; } }
 
+  header .botao.entrar { margin-left: 22px; padding: 10px 14px; }
+  header .botao.entrar + .botao { margin-left: 10px; }
+  @media (max-width: 900px) { header .botao.entrar { margin-left: auto; } header .botao.entrar + .botao { margin-left: 8px; } }
 </style>
 </head>
 <body>
@@ -314,6 +317,7 @@
       <a href="#jogo">Jogo</a>
       <a href="#perguntas">Perguntas</a>
     </nav>
+    <a class="botao contorno entrar" href="entrar/"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Entrar</a>
     <a class="botao azul" href="#baixar">Baixar</a>
   </div>
 </header>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VolAnt · Entrar</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<style>
+  @font-face { font-family: "Space Grotesk"; src: url(../fontes/SpaceGrotesk-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+  @font-face { font-family: Inter; src: url(../fontes/Inter-400.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: Inter; src: url(../fontes/Inter-600.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+  :root { --fundo:#0E1B2E; --cartao:#16263D; --linha:#24364F; --azul:#3D9BFF; --link:#8CC4FF;
+          --texto:#F2F6FB; --texto2:#C5D2E3; --texto3:#9FB0C6; --vermelho:#FF8A8A; --verde:#2FD27A; --ouro:#FFD24A; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--fundo); color:var(--texto); font:16px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:440px; margin:0 auto; padding:24px 20px 48px; }
+  .topo { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+  .topo a { display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; font:700 22px "Space Grotesk",Inter,sans-serif; }
+  .topo img { width:32px; height:32px; }
+  .passos { margin-left:auto; display:flex; gap:5px; }
+  .passos i { width:22px; height:5px; border-radius:9px; background:var(--linha); }
+  .passos i.on { background:var(--azul); }
+  h1 { font:700 26px/1.2 "Space Grotesk",Inter,sans-serif; margin:4px 0 8px; }
+  p { color:var(--texto2); margin:0 0 16px; font-size:15px; }
+  .c { text-align:center; }
+  label { display:block; font-size:13px; font-weight:600; color:var(--texto3); margin:14px 0 6px; }
+  label small { font-weight:400; }
+  input { width:100%; height:50px; border-radius:14px; border:2px solid var(--linha); background:var(--cartao);
+          color:var(--texto); font-size:16px; padding:0 16px; outline:none; }
+  input:focus { border-color:var(--link); }
+  button { font-family:inherit; }
+  .bt { width:100%; min-height:52px; border-radius:999px; border:2px solid var(--azul); background:var(--azul);
+        color:var(--fundo); font-weight:600; font-size:16px; cursor:pointer; margin-top:18px; }
+  .bt[disabled] { opacity:.5; cursor:default; }
+  .bt.leve { background:transparent; color:var(--link); border-color:var(--linha); margin-top:12px; }
+  .link { display:block; margin:6px auto 0; color:var(--link); font-weight:600; background:none; border:0; padding:12px; font-size:14px; cursor:pointer; }
+  .erro { color:var(--vermelho); font-weight:600; font-size:14px; min-height:20px; margin:10px 0 0; }
+  .mini { color:var(--texto3); font-size:13px; line-height:1.45; margin-top:16px; }
+  .mini a, p a { color:var(--link); font-weight:600; }
+  .ola { color:var(--texto2); font-size:14px; margin:0 0 12px; }
+  .opcao { width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center; gap:12px;
+           background:var(--cartao); color:var(--texto); border:2px solid var(--linha); border-radius:16px;
+           padding:12px 14px; margin-bottom:8px; cursor:pointer; font-size:15px; }
+  .opcao[aria-checked="true"] { border-color:var(--azul); }
+  .opcao b { display:block; font-size:15px; }
+  .opcao .eco { font-size:12.5px; color:var(--verde); font-weight:600; }
+  .opcao .fund { font-size:12.5px; color:var(--ouro); font-weight:600; }
+  .opcao .det { display:block; font-size:12.5px; color:var(--texto3); font-weight:400; margin-top:2px; }
+  .preco { text-align:right; font:700 18px "Space Grotesk",Inter,sans-serif; white-space:nowrap; }
+  .preco s { display:block; font:400 12px Inter,sans-serif; color:var(--texto3); }
+  .preco em { display:block; font:400 11.5px Inter,sans-serif; font-style:normal; color:var(--texto3); }
+  .qr { background:#fff; border-radius:18px; padding:14px; width:240px; height:240px; margin:6px auto 0; }
+  .qr img { width:100%; height:100%; display:block; image-rendering:pixelated; }
+  .espera { display:flex; align-items:center; justify-content:center; gap:10px; color:var(--texto2); font-size:14px; margin-top:16px; }
+  .pulso { width:10px; height:10px; border-radius:50%; background:var(--azul); animation:p 1.4s infinite; }
+  @keyframes p { 0% { box-shadow:0 0 0 0 rgba(61,155,255,.5); } 100% { box-shadow:0 0 0 12px rgba(61,155,255,0); } }
+  @media (prefers-reduced-motion: reduce) { .pulso { animation:none; box-shadow:0 0 0 5px rgba(61,155,255,.25); } }
+  .feito { width:76px; height:76px; border-radius:50%; background:rgba(47,210,122,.15); border:3px solid var(--verde);
+           color:var(--verde); font-size:40px; display:grid; place-items:center; margin:36px auto 16px; }
+  .caixa { background:var(--cartao); border:2px solid var(--linha); border-radius:16px; padding:14px 16px; margin-top:24px; }
+  .caixa b { display:block; margin-bottom:4px; }
+  .caixa span { display:block; font-size:13.5px; color:var(--texto3); }
+  .caixa .perigo { color:var(--vermelho); padding:12px 0 0; margin:0; }
+  .caixa .confirma { margin-top:12px; padding-top:12px; border-top:1px solid var(--linha); }
+  .caixa .confirma p { font-size:14px; margin-bottom:8px; }
+  .lado { display:flex; gap:10px; }
+  .lado .bt { margin-top:4px; min-height:46px; font-size:15px; }
+  .bt.vermelho { background:#FF5A5A; border-color:#FF5A5A; }
+  [hidden] { display:none !important; }
+
+  .conta { background:var(--cartao); border:2px solid var(--linha); border-radius:18px; padding:16px; margin-bottom:12px; }
+  .conta .tit { display:flex; align-items:center; gap:8px; font-weight:600; margin-bottom:4px; }
+  .conta .tit .selo { font:700 11px Inter,sans-serif; letter-spacing:.06em; color:#0E1B2E; background:var(--ouro); border-radius:999px; padding:3px 8px; }
+  .conta p { margin:0; font-size:14px; }
+  .conta .bt { margin-top:14px; }
+  .lista { list-style:none; padding:0; margin:18px 0 0; border-top:1px solid var(--linha); }
+  .lista li a, .lista li button { display:flex; justify-content:space-between; align-items:center; width:100%; padding:16px 2px; border:0; border-bottom:1px solid var(--linha);
+     background:none; color:var(--texto); font:600 15px Inter,sans-serif; text-decoration:none; cursor:pointer; text-align:left; }
+  .lista li a::after, .lista li button::after { content:"›"; color:var(--texto3); font-size:22px; line-height:1; }
+  .lista li .perigo { color:var(--vermelho); }
+  .ola2 { color:var(--texto3); font-size:14px; margin:-4px 0 18px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="topo"><a href="../index.html"><img src="../img/simbolo.svg" alt="">VolAnt</a></div>
+
+  <section id="passo-entrar">
+    <h1>Entrar no VolAnt</h1>
+    <p>Use o mesmo e-mail e senha do aplicativo.</p>
+    <form id="form-entrar">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password" required>
+      <div class="erro" id="erro-entrar" role="alert"></div>
+      <button class="bt" type="submit" id="botao-entrar">Entrar</button>
+    </form>
+    <button class="link" id="esqueci">Esqueci a senha: entrar com um código no e-mail</button>
+    <p class="mini">Ainda não tem conta? Baixe o VolAnt na <a href="https://play.google.com/store/apps/details?id=br.com.volant.app">Play Store</a> ou na <a href="https://apps.apple.com/br/app/id6836894723">App Store</a> e crie a sua.</p>
+  </section>
+
+  <section id="passo-codigo" hidden>
+    <h1>Código no e-mail</h1>
+    <p id="codigo-texto">Mandamos um código de 6 números.</p>
+    <form id="form-codigo">
+      <label for="codigo">Código</label>
+      <input id="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+      <div class="erro" id="erro-codigo" role="alert"></div>
+      <button class="bt" type="submit" id="botao-codigo">Confirmar</button>
+    </form>
+    <button class="link" id="voltar-codigo">Voltar</button>
+  </section>
+
+  <section id="passo-painel" hidden>
+    <h1>Abrindo o painel…</h1>
+    <p>Conta de administrador. Falta só o código do app autenticador.</p>
+  </section>
+
+  <section id="passo-conta" hidden>
+    <h1>Minha conta</h1>
+    <p class="ola2" id="quem"></p>
+    <div class="conta" id="cartao-pro"></div>
+    <ul class="lista">
+      <li><a href="../privacidade/index.html">Política de privacidade</a></li>
+      <li><a href="../excluir-conta/index.html" class="perigo">Excluir a minha conta</a></li>
+      <li><button id="sair">Sair</button></li>
+    </ul>
+  </section>
+</main>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+// Mesma chave de sessão da página /assinar: quem entra aqui já chega lá entrado.
+const s = createClient('https://hcmpksakeaknjmqbbmjp.supabase.co', 'sb_publishable_BAfygJ01KLoApRODYIOjtg_jf6L0vee',
+  { auth: { persistSession: true, storageKey: 'volant-assinar' } });
+const $ = (id) => document.getElementById(id);
+const PASSOS = ['passo-entrar', 'passo-codigo', 'passo-painel', 'passo-conta'];
+const NOMES = { anual: 'Anual', trimestral: 'Trimestral', mensal: 'Mensal' };
+const mostrar = (id) => { for (const p of PASSOS) $(p).hidden = p !== id; scrollTo(0, 0); };
+const data = (iso) => new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+function frase(e) {
+  const t = `${e?.code ?? ''} ${e?.message ?? ''}`.toLowerCase();
+  if (t.includes('invalid_credentials') || t.includes('invalid login')) return 'E-mail ou senha não conferem.';
+  if (t.includes('expired') || t.includes('otp')) return 'Código errado ou vencido.';
+  if (t.includes('rate') || t.includes('429') || t.includes('security')) return 'Muitas tentativas. Espere um minuto.';
+  if (t.includes('signups not allowed') || t.includes('not found')) return 'Não achei conta com esse e-mail.';
+  return 'Não deu certo agora. Confira a internet e tente de novo.';
+}
+const el = (tag, attrs = {}, ...filhos) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  for (const f of filhos) e.append(f instanceof Node ? f : String(f));
+  return e;
+};
+
+async function entrou() {
+  // Administrador: vai direto para o painel (que pede só o código do autenticador).
+  try {
+    const { data: adm } = await s.rpc('admin_eu');
+    if (adm?.admin) {
+      const { data: ses } = await s.auth.getSession();
+      const x = ses.session;
+      try {
+        sessionStorage.setItem('volant-painel', JSON.stringify({
+          access_token: x.access_token, refresh_token: x.refresh_token,
+          expires_in: x.expires_in, expira: x.expires_at * 1000,
+        }));
+      } catch (_) {}
+      mostrar('passo-painel');
+      location.href = '../painel/index.html';
+      return;
+    }
+  } catch (_) {}
+  let nome = '';
+  try { const r = await s.rpc('meu_nome'); nome = r.data?.nome ? `@${r.data.nome}` : ''; } catch (_) {}
+  const { data: eu } = await s.auth.getUser();
+  $('quem').textContent = [nome, eu.user?.email].filter(Boolean).join(' · ');
+  await cartaoPro();
+  mostrar('passo-conta');
+}
+
+async function cartaoPro() {
+  const c = $('cartao-pro');
+  const { data: e, error } = await s.functions.invoke('asaas', { body: { acao: 'estado' } });
+  const tit = (pro) => el('div', { class: 'tit' }, 'VolAnt Pro', ...(pro ? [el('span', { class: 'selo' }, 'PRO')] : []));
+  if (error || !e) { c.replaceChildren(tit(false), el('p', {}, 'Não deu para ver a assinatura agora.')); return; }
+  const a = e.assinatura;
+  if (e.pela_loja) {
+    c.replaceChildren(tit(true), el('p', {}, 'Você é Pro pela loja do celular (Google Play ou App Store). Para trocar ou cancelar, use a loja.'));
+  } else if (a?.valendo) {
+    c.replaceChildren(tit(true),
+      el('p', {}, `${NOMES[a.plano] ?? ''} · até ${data(a.expira_em)} · ${a.renova ? 'renova sozinho' : 'não renova'}.`),
+      el('a', { class: 'bt leve', href: '../assinar/index.html', style: 'display:grid;place-items:center;text-decoration:none' }, 'Ver a assinatura'));
+  } else {
+    c.replaceChildren(tit(false),
+      el('p', {}, 'Comparativo entre os apps, relatórios em PDF e mais. Pix Automático ou cartão.'),
+      el('a', { class: 'bt', href: '../assinar/index.html', style: 'display:grid;place-items:center;text-decoration:none' }, 'Assinar o VolAnt Pro'));
+  }
+}
+
+$('form-entrar').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); $('erro-entrar').textContent = ''; $('botao-entrar').disabled = true;
+  const { error } = await s.auth.signInWithPassword({ email: $('email').value.trim().toLowerCase(), password: $('senha').value });
+  $('botao-entrar').disabled = false;
+  if (error) $('erro-entrar').textContent = frase(error); else { $('senha').value = ''; await entrou(); }
+});
+$('esqueci').addEventListener('click', async () => {
+  const email = $('email').value.trim().toLowerCase();
+  if (!email) { $('erro-entrar').textContent = 'Escreva o seu e-mail primeiro.'; return; }
+  const { error } = await s.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  if (error) { $('erro-entrar').textContent = frase(error); return; }
+  $('codigo-texto').textContent = `Mandamos um código de 6 números para ${email}.`;
+  mostrar('passo-codigo');
+});
+$('form-codigo').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); $('botao-codigo').disabled = true;
+  const { error } = await s.auth.verifyOtp({ email: $('email').value.trim().toLowerCase(), token: $('codigo').value.trim(), type: 'email' });
+  $('botao-codigo').disabled = false;
+  if (error) $('erro-codigo').textContent = frase(error); else await entrou();
+});
+$('voltar-codigo').addEventListener('click', () => mostrar('passo-entrar'));
+$('sair').addEventListener('click', async () => { await s.auth.signOut({ scope: 'local' }); mostrar('passo-entrar'); });
+
+const { data: sessao } = await s.auth.getSession();
+if (sessao.session) await entrou();
+</script>
+</body>
+</html>
