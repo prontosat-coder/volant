@@ -1,5 +1,5 @@
 "use strict";
-// Painel VolAnt: Apoios à colônia, Financeiro, Excluir do app (0.30.14) Falhas do app (0.30.17), Assinaturas e Pontos (0.30.18), Liberar Pro e aviso de versão (1.0.0).
+// Painel VolAnt: Uso por conta (1.0.1), Apoios à colônia, Financeiro, Excluir do app (0.30.14) Falhas do app (0.30.17), Assinaturas e Pontos (0.30.18), Liberar Pro e aviso de versão (1.0.0).
 // Usa as peças do painel (window.volantPainel) e só chama funções de administrador.
 (() => {
   const P = window.volantPainel;
@@ -499,5 +499,125 @@
   Object.assign(frases, { periodo_invalido: "Escolha 1, 3 ou 12 meses.", versao_invalida: "Use o formato 1.0.0 (três números com ponto)." });
   Object.assign(frases, { pontos_invalidos: "Informe um número de pontos diferente de zero (até 10.000).", nao_achei: "Não achei esse motorista ou item. Confira o nome." });
 
-  window.volantExtra = (tela) => ({ apoios, financeiro, excluir, falhas, assinaturas, pontos })[tela]?.();
+  // ===================================================================================
+  // USO POR CONTA (1.0.1): travas contra contas falsas
+  // ===================================================================================
+  let usoDias = 1;
+  const situacoesUso = {
+    trava: ["critico", "Na trava"], celular: ["serio", "Celular com várias contas"],
+    perto: ["atencao", "Perto da trava"], ok: ["bom", "Tranquilo"],
+  };
+  const planosUso = { free: "Free", pro: "Pro", colaborador: "Colaborador" };
+  const corUso = (u, l) => (u >= l ? "var(--critico)" : u >= Math.ceil(l * 0.8) ? "var(--atencao)" : "var(--bom)");
+  const barraUso = (x) => h("div", { style: "min-width:64px" },
+    h("div", { style: "font-variant-numeric:tabular-nums" }, `${num(x.usado)} / ${num(x.limite)}`),
+    h("div", { style: "height:4px;border-radius:9px;background:var(--linha);margin-top:4px" },
+      h("div", { style: `height:4px;border-radius:9px;width:${Math.min(100, (100 * x.usado) / Math.max(1, x.limite)).toFixed(0)}%;background:${corUso(x.usado, x.limite)}` })));
+
+  async function uso() {
+    const onde = q("#tabUso");
+    try {
+      const l = await rpc("admin_uso_por_conta", { p_dias: usoDias, p_so_perto: q("#usoSoPerto").checked });
+      q("#contaUso").textContent = l.filter((x) => x.situacao === "trava" || x.situacao === "celular").length || "";
+      if (!l.length) {
+        onde.replaceChildren(h("p", { class: "vazio" }, q("#usoSoPerto").checked ? "Ninguém perto da trava." : "Ninguém publicou no período."));
+        return;
+      }
+      const cab = ["Conta", "Plano", "Trilhas por hora", "Perguntas por dia", "Postos por dia", "Respostas por hora",
+        usoDias === 1 ? "Hoje" : `${usoDias} dias`, "Situação", ""];
+      onde.replaceChildren(h("div", { style: "overflow-x:auto" }, tabela(cab, l.map((x) => {
+        const [cor, nome] = situacoesUso[x.situacao] || situacoesUso.ok;
+        const detalhe = x.situacao === "celular" ? `${x.contas_no_celular} contas no mesmo celular`
+          : x.dias_perto >= 2 ? `perto da trava em ${x.dias_perto} dos últimos 7 dias`
+          : x.colaborador_em ? `Colaborador desde ${data(x.colaborador_em)}` : "";
+        const p = x.periodo;
+        const acoes = h("div", { style: "display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:170px" });
+        if (x.plano === "colaborador") acoes.append(h("button", { class: "bt fino", type: "button", onclick: () => colaborador(x, false) }, "Tirar Colaborador"));
+        else if (!x.conta_nova && (x.situacao === "perto" || x.dias_perto >= 2)) acoes.append(h("button", { class: "bt azul", type: "button", onclick: () => colaborador(x, true) }, "Liberar mais"));
+        else if (x.limitada_aparelho) acoes.append(h("button", { class: "bt fino", type: "button", onclick: () => colaborador(x, true) }, "Liberar"));
+        acoes.append(h("button", { class: "bt fino", type: "button", onclick: () => verPublicado(x) }, "Ver o que publicou"));
+        if (x.contas_no_celular >= 2) acoes.append(h("button", { class: "bt fino", type: "button", onclick: () => verCelular(x) }, "Ver as contas do celular"));
+        if (x.lote_apagado) acoes.append(h("button", { class: "bt fino", type: "button", onclick: () => desfazerApagar(x) }, "Desfazer o apagar"));
+        else acoes.append(h("button", { class: "bt fino", type: "button", style: "color:var(--critico)", onclick: () => apagarTudo(x) }, "Apagar tudo desta conta"));
+        return [
+          h("div", {}, h("b", {}, "@" + x.nome),
+            h("div", { class: "meta" }, [x.cidade, x.conta_nova ? (x.limitada_aparelho ? "limitada pelo celular" : "conta nova") : `desde ${data(x.criado_em)}`].filter(Boolean).join(" · "))),
+          h("span", { class: "tag" }, planosUso[x.plano] || x.plano),
+          barraUso(x.agora.trilhas), barraUso(x.agora.perguntas), barraUso(x.agora.postos), barraUso(x.agora.respostas),
+          h("b", { title: `${num(p.trilhas)} trilhas · ${num(p.perguntas)} perguntas · ${num(p.respostas)} respostas · ${num(p.postos)} postos` }, num(p.trilhas + p.perguntas + p.respostas + p.postos)),
+          h("div", {}, h("span", { class: "estado " + cor }, nome), detalhe ? h("div", { class: "meta" }, detalhe) : ""),
+          acoes,
+        ];
+      }))));
+    } catch (e) {
+      erro(onde, e);
+    }
+  }
+
+  function colaborador(x, ligar) {
+    abrir(ligar ? `Liberar mais para @${x.nome}?` : `Tirar o Colaborador de @${x.nome}?`,
+      h("p", { class: "sub" }, ligar
+        ? "A conta vira Colaborador: fica com as travas do Pro (10 trilhas por hora, 10 perguntas e 6 postos por dia), sem cobrar nada, até você tirar. Também deixa de ser tratada como conta nova."
+        : "A conta volta às travas normais do plano dela."),
+      ligar ? "Liberar mais" : "Tirar", async () => {
+        await rpc("admin_colaborador", { p_conta: x.id, p_ligar: ligar });
+        await uso();
+      });
+  }
+
+  async function verPublicado(x) {
+    const corpo = h("div", { class: "lista", style: "max-height:55vh;overflow:auto" }, h("p", { class: "vazio" }, "Carregando…"));
+    abrir(`O que @${x.nome} publicou (7 dias)`, corpo, "Fechar", async () => {});
+    try {
+      const l = await rpc("admin_publicado_por", { p_conta: x.id });
+      corpo.replaceChildren(...(l.length ? l.map((i) => h("div", { class: "it" },
+        h("div", {}, h("span", { class: "tag" }, i.tipo), i.texto,
+          h("div", { class: "meta" }, dataHora(i.quando) + (i.valendo ? "" : " · já saiu do app"))))) : [h("p", { class: "vazio" }, "Nada nos últimos 7 dias.")]));
+    } catch (e) {
+      erro(corpo, e);
+    }
+  }
+
+  async function verCelular(x) {
+    const corpo = h("div", { class: "lista" }, h("p", { class: "vazio" }, "Carregando…"));
+    abrir(`Contas no mesmo celular de @${x.nome}`, [h("p", { class: "sub" }, "Contas que abriram o app no mesmo celular. A partir da 3ª conta nova em 30 dias, a conta fica com as travas de conta nova até você liberar."), corpo], "Fechar", async () => {});
+    try {
+      const l = await rpc("admin_contas_do_celular", { p_conta: x.id });
+      corpo.replaceChildren(...l.map((c) => h("div", { class: "it" },
+        h("div", {}, h("b", {}, "@" + c.nome), h("div", { class: "meta" }, `criada em ${data(c.criado_em)}`)),
+        c.colaborador ? h("span", { class: "estado bom" }, "Colaborador") : c.limitada ? h("span", { class: "estado serio" }, "Limitada") : "")));
+    } catch (e) {
+      erro(corpo, e);
+    }
+  }
+
+  function apagarTudo(x) {
+    abrir(`Apagar tudo de @${x.nome}?`,
+      h("p", { class: "sub" }, "Vai para a lixeira: trilhas valendo, perguntas e respostas dos últimos 30 dias, postos adicionados e preços dos últimos 7 dias. A conta continua existindo. Dá para desfazer por 30 dias, aqui mesmo."),
+      "Apagar tudo", async () => {
+        const r = await rpc("admin_apagar_tudo", { p_conta: x.id });
+        await uso();
+        alert(`${r.itens} ${r.itens === 1 ? "item foi" : "itens foram"} para a lixeira.`);
+      });
+  }
+
+  function desfazerApagar(x) {
+    abrir(`Desfazer o apagar de @${x.nome}?`, h("p", { class: "sub" }, "Tudo o que foi apagado de uma vez volta para o app."),
+      "Desfazer", async () => {
+        await rpc("admin_desfazer_apagar", { p_lote: x.lote_apagado });
+        await uso();
+      });
+  }
+
+  for (const b of document.querySelectorAll("#usoPeriodo button")) {
+    b.addEventListener("click", () => {
+      usoDias = +b.dataset.d;
+      for (const o of document.querySelectorAll("#usoPeriodo button")) o.classList.toggle("on", o === b);
+      uso();
+    });
+  }
+  q("#usoSoPerto")?.addEventListener("change", uso);
+  q("#btUso")?.addEventListener("click", uso);
+
+  window.volantExtra = (tela) => ({ apoios, financeiro, excluir, falhas, assinaturas, pontos, uso })[tela]?.();
 })();
