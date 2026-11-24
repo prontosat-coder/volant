@@ -69,6 +69,7 @@
     <tr><td>Nome de usuário</td><td>É como os outros veem você</td><td>Enquanto a conta existir; depois de trocado ou excluído, fica guardado 30 dias para ninguém se passar por você</td></tr>
     <tr><td>Cópia dos seus dados: carros, metas, corridas, ganhos, abastecimentos, manutenções, lembretes e provas</td><td>Trazer tudo de volta quando você troca de celular ou reinstala o app. A cópia sai do seu celular fechada com uma senha que só você sabe: sem ela ninguém abre, nem a VolAnt. Não usamos para mais nada</td><td>Enquanto a conta existir. Ao trocar os dados, a cópia anterior fica guardada 30 dias. Excluir a conta apaga tudo</td></tr>
     <tr><td>Localização</td><td>Só com o dia em andamento ou quando você pede ajuda: mostrar você aos amigos da expedição e, se você ligar, aos outros motoristas da cidade (arredondada para a quadra)</td><td>Só a última posição; some quando você para de aparecer</td></tr>
+    <tr><td>Localização arredondada (para a previsão do tempo)</td><td>Achar a sua cidade e mostrar a previsão no Início</td><td>Não guardamos: serve só para achar a cidade; guardamos só a previsão da cidade por 3 horas</td></tr>
     <tr><td>Mensagens, recados, alertas e pedidos de ajuda</td><td>Conversa da expedição (todos os seus amigos leem), conversa privada (só você e o amigo leem) e segurança</td><td>Mensagens somem em 24 horas; avisos ficam até serem encerrados</td></tr>
     <tr><td>Trilhas, perguntas e respostas da Colônia; postos e pontos de recarga que você adiciona e preços que você avisa</td><td>Dicas entre motoristas da cidade</td><td>Até você apagar ou a conta ser excluída</td></tr>
     <tr><td>Placar do Desafio (um jogo de treino)</td><td>Ranking do dia entre os amigos da expedição e da colônia, só com o nome de usuário</td><td>30 dias</td></tr>
@@ -86,6 +87,7 @@
     <li>Com os serviços que fazem o app funcionar: Supabase (servidor e conta), Google Firebase (avisos no celular),
       Google Play e App Store (pagamento da assinatura no app), Asaas (cobrança e nota fiscal de quem assina pelo site),
       ViaCEP (na página de assinatura do site, recebe só o CEP para mostrar a rua) e OpenFreeMap (desenho do mapa, que recebe só a área do mapa vista).</li>
+    <li>Com o INMET (previsão do tempo): recebe só o código da cidade, pedido pelo nosso servidor, nunca dados seus.</li>
     <li>Com autoridades, só quando a lei obrigar.</li>
   </ul>
 
