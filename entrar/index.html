@@ -222,7 +222,7 @@ async function entrou() {
     : eu.user?.email ?? '';
   mostrar('passo-conta');
   await Promise.all([cartaoPro(c?.plano), pagamentos()]);
-  copia(c?.copia);
+  if (c) copia(c.copia); // sem a resposta do servidor, nao afirma que a copia nao existe
   colonia(c?.colonia, p);
   participacao(c?.participacao, p);
 }
