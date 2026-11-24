@@ -81,6 +81,23 @@
   .lista li a::after, .lista li button::after { content:"›"; color:var(--texto3); font-size:22px; line-height:1; }
   .lista li .perigo { color:var(--vermelho); }
   .ola2 { color:var(--texto3); font-size:14px; margin:-4px 0 18px; }
+  .rotulo { font:600 12px Inter,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--texto3); margin:22px 2px 8px; }
+  .conta .lin { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:10px 0; border-bottom:1px solid var(--linha); font-size:14.5px; color:var(--texto2); }
+  .conta .lin:first-child { padding-top:0; }
+  .conta .lin:last-child { border-bottom:0; padding-bottom:0; }
+  .conta .lin b { color:var(--texto); text-align:right; }
+  .conta .lin a { color:var(--link); font-weight:600; text-decoration:none; }
+  .conta .pag { padding:10px 0; border-bottom:1px solid var(--linha); }
+  .conta .pag:first-child { padding-top:0; }
+  .conta .pag .lin { border:0; padding:0; }
+  .conta .pag a { display:inline-block; margin-top:4px; color:var(--link); font-weight:600; font-size:13.5px; text-decoration:none; }
+  .numeros { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0 0; }
+  .numeros div { background:var(--fundo); border:1px solid var(--linha); border-radius:12px; padding:10px 6px; text-align:center; }
+  .numeros b { display:block; font:700 22px "Space Grotesk",Inter,sans-serif; color:var(--texto); }
+  .numeros span { display:block; font-size:12.5px; color:var(--texto3); line-height:1.3; }
+  .conta .nota { font-size:12.5px; color:var(--texto3); margin-top:12px; line-height:1.45; }
+  .chamada { display:flex; gap:10px; background:rgba(255,210,74,.08); border:1px solid rgba(255,210,74,.35); border-radius:12px; padding:10px 12px; margin-top:12px; font-size:14px; color:var(--texto2); }
+  .chamada b { color:var(--texto); }
 </style>
 </head>
 <body>
@@ -123,11 +140,28 @@
     <h1>Minha conta</h1>
     <p class="ola2" id="quem"></p>
     <div class="conta" id="cartao-pro"></div>
+    <div id="bloco-pagamentos" hidden>
+      <h2 class="rotulo">Pagamentos</h2>
+      <div class="conta" id="pagamentos"></div>
+    </div>
+    <div id="bloco-copia" hidden>
+      <h2 class="rotulo">Cópia dos seus dados</h2>
+      <div class="conta" id="copia"></div>
+    </div>
+    <div id="bloco-colonia" hidden>
+      <h2 class="rotulo" id="titulo-colonia">Sua colônia</h2>
+      <div class="conta" id="colonia"></div>
+    </div>
+    <div id="bloco-participacao" hidden>
+      <h2 class="rotulo">Sua participação</h2>
+      <div class="conta" id="participacao"></div>
+    </div>
     <ul class="lista">
+      <li><button id="baixar">Baixar os meus dados</button></li>
       <li><a href="../privacidade/index.html">Política de privacidade</a></li>
-      <li><a href="../excluir-conta/index.html" class="perigo">Excluir a minha conta</a></li>
       <li><button id="sair">Sair</button></li>
     </ul>
+    <div class="erro" id="erro-conta" role="status"></div>
   </section>
 </main>
 
@@ -176,18 +210,46 @@ async function entrou() {
       return;
     }
   } catch (_) {}
-  let nome = '';
-  try { const r = await s.rpc('meu_nome'); nome = r.data?.nome ? `@${r.data.nome}` : ''; } catch (_) {}
+  // Tudo o que a "Minha conta" mostra vem numa chamada so; o cartao do Pro e os pagamentos, do Asaas.
+  for (const b of ['bloco-pagamentos', 'bloco-copia', 'bloco-colonia', 'bloco-participacao']) $(b).hidden = true;
+  $('erro-conta').textContent = '';
+  let c = null;
+  try { c = (await s.rpc('minha_conta')).data; } catch (_) {}
   const { data: eu } = await s.auth.getUser();
-  $('quem').textContent = [nome, eu.user?.email].filter(Boolean).join(' · ');
-  await cartaoPro();
+  const p = c?.perfil;
+  $('quem').textContent = p
+    ? [`@${p.nome}`, p.cidade ? `${p.cidade} (${p.uf})` : '', `no VolAnt desde ${desde(p.desde)}`].filter(Boolean).join(' · ')
+    : eu.user?.email ?? '';
   mostrar('passo-conta');
+  await Promise.all([cartaoPro(c?.plano), pagamentos()]);
+  copia(c?.copia);
+  colonia(c?.colonia, p);
+  participacao(c?.participacao, p);
 }
 
-async function cartaoPro() {
+const desde = (iso) => new Date(iso).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric', timeZone: 'America/Sao_Paulo' });
+const dinheiro = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const numero = (n) => Number(n ?? 0).toLocaleString('pt-BR');
+function quando(iso) {
+  const d = new Date(iso);
+  const dia = (x) => x.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).replace(':', 'h');
+  const hoje = new Date();
+  const ontem = new Date(hoje.getTime() - 86400000);
+  if (dia(d) === dia(hoje)) return `hoje, ${hora}`;
+  if (dia(d) === dia(ontem)) return `ontem, ${hora}`;
+  return dia(d);
+}
+const linha = (rotulo, valor) => el('div', { class: 'lin' }, el('span', {}, rotulo), valor instanceof Node ? valor : el('b', {}, valor));
+const numeros = (itens) => el('div', { class: 'numeros' },
+  ...itens.map(([n, t]) => el('div', {}, el('b', {}, numero(n)), el('span', {}, t))));
+const plural = (n, um, varios) => (Number(n) === 1 ? um : varios);
+
+async function cartaoPro(plano) {
   const c = $('cartao-pro');
   const { data: e, error } = await s.functions.invoke('asaas', { body: { acao: 'estado' } });
-  const tit = (pro) => el('div', { class: 'tit' }, 'VolAnt Pro', ...(pro ? [el('span', { class: 'selo' }, 'PRO')] : []));
+  const tit = (pro, texto = 'VolAnt Pro') => el('div', { class: 'tit' }, ...(pro ? [el('span', { class: 'selo' }, 'PRO')] : []), texto);
+  const botao = (texto, leve = false) => el('a', { class: leve ? 'bt leve' : 'bt', href: '../assinar/index.html', style: 'display:grid;place-items:center;text-decoration:none' }, texto);
   if (error || !e) { c.replaceChildren(tit(false), el('p', {}, 'Não deu para ver a assinatura agora.')); return; }
   const a = e.assinatura;
   if (e.pela_loja) {
@@ -195,13 +257,98 @@ async function cartaoPro() {
   } else if (a?.valendo) {
     c.replaceChildren(tit(true),
       el('p', {}, a.renova ? `${NOMES[a.plano] ?? 'VolAnt Pro'}.` : `${NOMES[a.plano] ?? ''} · até ${data(a.expira_em)} · não renova.`),
-      el('a', { class: 'bt leve', href: '../assinar/index.html', style: 'display:grid;place-items:center;text-decoration:none' }, 'Ver a assinatura'));
+      botao('Ver a assinatura', true));
+  } else if (plano?.motivo === 'assinatura' && plano.produto === 'painel' && plano.expira_em) {
+    c.replaceChildren(tit(true, 'VolAnt Pro de presente'),
+      el('p', {}, 'Você tem tudo do VolAnt até ', el('b', {}, data(plano.expira_em)), '.'),
+      botao('Ver planos', true));
+  } else if (plano?.motivo === 'teste' && plano.fim_teste) {
+    c.replaceChildren(tit(true, 'VolAnt Pro grátis'),
+      el('p', {}, 'Você tem tudo do VolAnt, sem pagar nada, até ', el('b', {}, data(plano.fim_teste)), '.'),
+      botao('Ver planos'));
   } else {
     c.replaceChildren(tit(false),
       el('p', {}, 'Comparativo entre os apps, relatórios em PDF e mais. Pix Automático ou cartão.'),
-      el('a', { class: 'bt', href: '../assinar/index.html', style: 'display:grid;place-items:center;text-decoration:none' }, 'Assinar o VolAnt Pro'));
+      botao('Assinar o VolAnt Pro'));
   }
 }
+
+async function pagamentos() {
+  const { data: r, error } = await s.functions.invoke('asaas', { body: { acao: 'pagamentos' } });
+  const lista = error ? [] : (r?.pagamentos ?? []);
+  if (!lista.length) return;
+  const FORMAS = { pix: 'Pix', cartao: 'Cartão' };
+  $('pagamentos').replaceChildren(
+    ...lista.map((x) => el('div', { class: 'pag' },
+      linha([data(`${x.dia}T12:00:00`), NOMES[x.plano], FORMAS[x.forma]].filter(Boolean).join(' · '),
+        `${dinheiro(x.valor)} ${x.devolvido ? 'devolvido' : 'pago'}`),
+      ...(x.recibo ? [el('a', { href: x.recibo, target: '_blank', rel: 'noopener' }, 'Ver o recibo')] : []))),
+    el('p', { class: 'nota' }, 'Aqui aparecem os pagamentos feitos pelo site. Quem assina pela loja vê os pagamentos no Google Play ou na App Store.'));
+  $('bloco-pagamentos').hidden = false;
+}
+
+function copia(cp) {
+  const c = $('copia');
+  if (!cp) {
+    c.replaceChildren(linha('Última cópia', 'ainda não tem'),
+      el('p', { class: 'nota' }, 'Guarde uma cópia pelo app, em Perfil → Sua conta. Assim, se trocar de celular, nada se perde.'));
+  } else {
+    c.replaceChildren(
+      linha('Última cópia', [quando(cp.feita_em), cp.aparelho].filter(Boolean).join(' · ')),
+      numeros([[cp.corridas, plural(cp.corridas, 'corrida', 'corridas')],
+               [cp.abastecimentos, plural(cp.abastecimentos, 'abastecimento', 'abastecimentos')],
+               [cp.manutencoes, plural(cp.manutencoes, 'manutenção', 'manutenções')]]),
+      el('p', { class: 'nota' }, 'Os valores das corridas ficam protegidos: só o app abre a cópia. Aqui você confere se ela está em dia.'));
+  }
+  $('bloco-copia').hidden = false;
+}
+
+function colonia(co, p) {
+  if (!co || !p?.cidade) return;
+  $('titulo-colonia').textContent = `Sua colônia · ${p.cidade}`;
+  const itens = [
+    linha('Agora', co.rodando ? `${numero(co.rodando)} formigas rodando` : 'Colônia tranquila'),
+    linha('Trilhas abertas', numero(co.trilhas_abertas)),
+  ];
+  if (co.perguntas_sem_resposta > 0) {
+    const n = co.perguntas_sem_resposta;
+    itens.push(el('div', { class: 'chamada' }, el('span', { 'aria-hidden': 'true' }, '💬'),
+      el('span', {}, el('b', {}, `${numero(n)} ${plural(n, 'pergunta', 'perguntas')} no mural`),
+        ' esperando resposta. Responda pelo app.')));
+  }
+  $('colonia').replaceChildren(...itens);
+  $('bloco-colonia').hidden = false;
+}
+
+function participacao(pa, p) {
+  if (!pa || !p) return;
+  const link = `https://volant.app.br/convite/?de=${encodeURIComponent(p.nome)}` +
+    (p.cidade ? `&c=${encodeURIComponent(`${p.cidade.replaceAll(' ', '_')}-${p.uf}`)}` : '');
+  const copiar = el('button', { class: 'bt leve', type: 'button' }, 'Copiar meu link de convite');
+  copiar.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(link); copiar.textContent = 'Link copiado!'; }
+    catch (_) { copiar.textContent = link; }
+    setTimeout(() => { copiar.textContent = 'Copiar meu link de convite'; }, 2500);
+  });
+  $('participacao').replaceChildren(
+    numeros([[pa.ajudados, plural(pa.ajudados, 'colega ajudado', 'colegas ajudados')],
+             [pa.trilhas, plural(pa.trilhas, 'trilha deixada', 'trilhas deixadas')],
+             [pa.convidados, plural(pa.convidados, 'convidado', 'convidados')]]),
+    el('div', { class: 'lin', style: 'margin-top:12px;border-top:1px solid var(--linha);padding-top:12px' },
+      el('span', {}, 'Sua expedição'), el('b', {}, `${numero(pa.amigos)} ${plural(pa.amigos, 'amigo', 'amigos')}`)),
+    copiar);
+  $('bloco-participacao').hidden = false;
+}
+
+$('baixar').addEventListener('click', async () => {
+  $('erro-conta').textContent = '';
+  const { data: d, error } = await s.rpc('meus_dados');
+  if (error || !d) { $('erro-conta').textContent = 'Não deu para baixar agora. Tente de novo em instantes.'; return; }
+  const arquivo = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  const a = el('a', { href: URL.createObjectURL(arquivo), download: `volant-meus-dados-${new Date().toISOString().slice(0, 10)}.json` });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+});
 
 $('form-entrar').addEventListener('submit', async (ev) => {
   ev.preventDefault(); $('erro-entrar').textContent = ''; $('botao-entrar').disabled = true;
