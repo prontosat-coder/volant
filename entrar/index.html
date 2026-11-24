@@ -104,7 +104,11 @@
 <main>
   <div class="topo"><a href="../index.html"><img src="../img/simbolo.svg" alt="">VolAnt</a></div>
 
-  <section id="passo-entrar">
+  <section id="passo-abrindo">
+    <div class="espera" style="margin-top:48px"><span class="pulso"></span>Abrindo a sua conta…</div>
+  </section>
+
+  <section id="passo-entrar" hidden>
     <h1>Entrar no VolAnt</h1>
     <p>Use o mesmo e-mail e senha do aplicativo.</p>
     <form id="form-entrar">
@@ -171,7 +175,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const s = createClient('https://hcmpksakeaknjmqbbmjp.supabase.co', 'sb_publishable_BAfygJ01KLoApRODYIOjtg_jf6L0vee',
   { auth: { persistSession: true, storageKey: 'volant-assinar' } });
 const $ = (id) => document.getElementById(id);
-const PASSOS = ['passo-entrar', 'passo-codigo', 'passo-painel', 'passo-conta'];
+const PASSOS = ['passo-abrindo', 'passo-entrar', 'passo-codigo', 'passo-painel', 'passo-conta'];
 const NOMES = { anual: 'Anual', trimestral: 'Trimestral', mensal: 'Mensal' };
 const mostrar = (id) => { for (const p of PASSOS) $(p).hidden = p !== id; scrollTo(0, 0); };
 const data = (iso) => new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
@@ -211,20 +215,24 @@ async function entrou() {
     }
   } catch (_) {}
   // Tudo o que a "Minha conta" mostra vem numa chamada so; o cartao do Pro e os pagamentos, do Asaas.
+  // A pagina so aparece quando tudo chegou (antes ficava um cartao vazio piscando).
+  mostrar('passo-abrindo');
   for (const b of ['bloco-pagamentos', 'bloco-copia', 'bloco-colonia', 'bloco-participacao']) $(b).hidden = true;
   $('erro-conta').textContent = '';
-  let c = null;
-  try { c = (await s.rpc('minha_conta')).data; } catch (_) {}
-  const { data: eu } = await s.auth.getUser();
+  const [conta, quemSou] = await Promise.all([
+    s.rpc('minha_conta').then((r) => r.data, () => null),
+    s.auth.getUser().then((r) => r.data, () => ({})),
+  ]);
+  const c = conta;
   const p = c?.perfil;
   $('quem').textContent = p
     ? [`@${p.nome}`, p.cidade ? `${p.cidade} (${p.uf})` : '', `no VolAnt desde ${desde(p.desde)}`].filter(Boolean).join(' · ')
-    : eu.user?.email ?? '';
-  mostrar('passo-conta');
+    : quemSou?.user?.email ?? '';
   await Promise.all([cartaoPro(c?.plano), pagamentos()]);
   if (c) copia(c.copia); // sem a resposta do servidor, nao afirma que a copia nao existe
   colonia(c?.colonia, p);
   participacao(c?.participacao, p);
+  mostrar('passo-conta');
 }
 
 const desde = (iso) => new Date(iso).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric', timeZone: 'America/Sao_Paulo' });
@@ -374,7 +382,7 @@ $('voltar-codigo').addEventListener('click', () => mostrar('passo-entrar'));
 $('sair').addEventListener('click', async () => { await s.auth.signOut({ scope: 'local' }); mostrar('passo-entrar'); });
 
 const { data: sessao } = await s.auth.getSession();
-if (sessao.session) await entrou();
+if (sessao.session) await entrou(); else mostrar('passo-entrar');
 </script>
 </body>
 </html>
