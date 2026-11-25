@@ -5,6 +5,12 @@
   const P = window.volantPainel;
   if (!P) return;
   const { rpc, criar: h, um: q, erro, tabela, num, data, dataHora } = P;
+  const sv = (tag, attrs, ...filhos) => {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    el.append(...filhos);
+    return el;
+  };
   const dinheiro = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const frases = {
     site_sem_https: "O site precisa começar com https://",
@@ -12,6 +18,11 @@
     ponto_pela_metade: "Confira o ponto no mapa: são dois números, separados por vírgula.",
     nao_achei: "Não achei esse item. Atualize a tela.",
     ainda_rascunho: "Este anúncio ainda é rascunho: use Ativar.",
+    evento_sem_titulo: "Escreva o nome do evento (pelo menos 3 letras).",
+    evento_sem_data: "Confira o dia e os horários do evento.",
+    evento_passou: "Esse evento já terminou: confira o dia e os horários.",
+    evento_nao_renova: "Evento não se renova: crie um novo para outra data.",
+    tipo_desconhecido: "Escolha Apoio ou Evento.",
   };
   const dizer = (e) => frases[e.message] || e.message;
   const hoje = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
@@ -47,6 +58,108 @@
     s.value = String(valor ?? opcoes[0][0]);
     return s;
   };
+
+  // Contador ao lado do campo: "28/32". Passou do que cabe na linha do app: fica amarelo.
+  function contador(el, cabe, dica) {
+    const c = h("span", { style: "font-weight:600" });
+    const contar = () => {
+      const n = el.value.trim().length;
+      c.textContent = `${n}/${cabe}`;
+      c.style.color = n > cabe ? "var(--amarelo, #FFC83D)" : "var(--texto3)";
+      c.title = n > cabe ? dica : "";
+    };
+    el.addEventListener("input", contar);
+    contar();
+    return c;
+  }
+  const campoContado = (rotulo, el, cabe, dica, ajuda) =>
+    h("label", { style: "display:grid;gap:4px;font-size:12.5px;color:var(--texto3);font-weight:600" },
+      h("span", { style: "display:flex;justify-content:space-between;gap:8px" }, rotulo, contador(el, cabe, dica)), el,
+      ajuda ? h("span", { style: "font-weight:400" }, ajuda) : "");
+
+  // Quando é o evento, como no app: "Hoje, 14h às 18h", "Sábado, 28/11, 14h às 18h".
+  function quandoDoEvento(inicio, fim) {
+    const fuso = { timeZone: "America/Sao_Paulo" };
+    const dia = (d) => d.toLocaleDateString("sv-SE", fuso);
+    const hora = (d) => {
+      const [hh, mm] = d.toLocaleTimeString("pt-BR", { ...fuso, hour: "2-digit", minute: "2-digit", hour12: false }).split(":");
+      return mm === "00" ? `${+hh}h` : `${+hh}h${mm}`;
+    };
+    const hoje = new Date(dia(new Date()) + "T12:00:00"), d = new Date(dia(inicio) + "T12:00:00");
+    const diferenca = Math.round((d - hoje) / 864e5);
+    const nomes = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const qual = diferenca <= 0 ? "Hoje" : diferenca === 1 ? "Amanhã"
+      : `${nomes[d.getDay()]}, ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return dia(inicio) === dia(fim) ? `${qual}, ${hora(inicio)} às ${hora(fim)}` : `${qual}, ${hora(inicio)}`;
+  }
+
+  // Prévia de como aparece no app: a linha de cima do mapa e o cartão (cores do app).
+  function previaNoApp() {
+    const caixa = h("div", { style: "background:#0E1B2E;border-radius:14px;padding:12px;display:grid;gap:10px" });
+    const desenhar = ({ evento, nome, titulo, sub, quando, beneficio, horario, logo, destaque }) => {
+      const cor = evento ? "#FF7EB6" : "#FFD24A";
+      const quadrado = (lado, fonte) => {
+        const q2 = h("div", { style: `width:${lado}px;height:${lado}px;border-radius:${lado / 4}px;background:#0E1B2E;display:flex;align-items:center;justify-content:center;overflow:hidden;color:${cor};font-weight:800;font-size:${fonte}px;flex:none` });
+        if (evento) q2.append(sv("svg", { viewBox: "0 0 24 24", width: fonte, height: fonte, fill: cor },
+          sv("path", { d: "M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 16H5V9h14v11ZM7 11h5v5H7z" })));
+        else if (logo) q2.append(h("img", { src: logo, alt: "", style: "width:100%;height:100%;object-fit:cover" }));
+        else q2.append((nome || "?").trim().charAt(0).toUpperCase() || "?");
+        return q2;
+      };
+      const etiqueta = (t) => h("span", { style: `background:${cor}2e;color:${cor};border-radius:999px;padding:1px 7px;font-size:11px;font-weight:700;white-space:nowrap` }, t);
+      const umaLinha = "white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+      const grande = evento ? (titulo || "Nome do evento") : (nome || "Nome do parceiro");
+      const embaixo = evento ? quando : (beneficio || sub);
+      // A largura do celular mais comum (360 de largura): o que passar some com "...".
+      const linha = h("div", { style: `width:336px;max-width:100%;height:52px;box-sizing:border-box;background:#16263D;border:1.5px solid ${cor}73;border-radius:12px;display:flex;align-items:center;gap:10px;padding:0 10px 0 9px` },
+        quadrado(34, 16),
+        h("div", { style: "flex:1;min-width:0" },
+          h("div", { style: `${umaLinha};color:#F2F6FB;font-weight:700;font-size:13.5px` }, grande, h("span", { style: "color:#9FB0C6;font-weight:400;font-size:12px" }, " · 1,2 km")),
+          embaixo ? h("div", { style: `${umaLinha};color:${evento ? "#FF7EB6" : "#2FD27A"};font-weight:600;font-size:12.5px` }, embaixo) : ""),
+        etiqueta(evento ? "Evento" : "Apoio"));
+      const cartao = h("div", { style: `width:336px;max-width:100%;box-sizing:border-box;background:#16263D;border:2px solid ${cor};border-radius:18px;padding:12px 14px;display:grid;gap:8px` },
+        h("div", { style: "display:flex;align-items:center;gap:10px" }, quadrado(44, 22),
+          h("div", { style: "flex:1;min-width:0" },
+            h("div", { style: "color:#F2F6FB;font-weight:700;font-size:16px" }, grande),
+            h("div", { style: "color:#9FB0C6;font-size:12.5px" }, [evento ? `por ${nome || "parceiro"}` : sub, "1,2 km"].filter(Boolean).join(" · "))),
+          etiqueta(evento ? "Evento" : destaque ? "Apoiador destaque" : "Apoiador")),
+        evento ? h("div", { style: "color:#F2F6FB;font-weight:700;font-size:13.5px" }, "🕑 " + (quando || "Dia e hora"))
+          : horario ? h("div", { style: "color:#C5D2E3;font-size:13px" }, horario) : "",
+        beneficio ? h("div", { style: "background:#173B33;color:#F2F6FB;border-radius:10px;padding:8px 10px;font-size:13px" }, "🎁 Para a colônia: " + beneficio) : "");
+      caixa.replaceChildren(
+        h("div", { style: "color:#9FB0C6;font-size:11.5px;font-weight:600" }, "Como aparece no app: a linha em cima do mapa"), linha,
+        h("div", { style: "color:#9FB0C6;font-size:11.5px;font-weight:600" }, "e o cartão, ao tocar"), cartao);
+    };
+    return { caixa, desenhar };
+  }
+
+  // Envia a imagem do parceiro para o servidor (pasta "apoios") e devolve o endereço público.
+  async function enviarImagem(arquivo) {
+    const tipos = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+    if (!tipos[arquivo.type]) throw new Error("A imagem precisa ser PNG, JPG ou WebP.");
+    if (arquivo.size > 500 * 1024) throw new Error("A imagem passa de 500 KB. Diminua e tente de novo.");
+    const caminho = `parceiros/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${tipos[arquivo.type]}`;
+    const r = await fetch(`${P.base}/storage/v1/object/apoios/${caminho}`, {
+      method: "POST",
+      headers: { apikey: P.chave, Authorization: "Bearer " + await P.token(), "Content-Type": arquivo.type, "x-upsert": "false" },
+      body: arquivo,
+    });
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.statusCode === "403" || r.status === 403
+        ? "O servidor recusou a imagem: entre de novo com o código e tente outra vez."
+        : `Não deu para enviar a imagem (${e.message || r.status}).`);
+    }
+    return `${P.base}/storage/v1/object/public/apoios/${caminho}`;
+  }
+
+  // Lê o tamanho da imagem escolhida (para avisar se não é quadrada ou é pequena).
+  const medidas = (arquivo) => new Promise((ok) => {
+    const img = new Image();
+    img.onload = () => { ok([img.naturalWidth, img.naturalHeight]); URL.revokeObjectURL(img.src); };
+    img.onerror = () => ok([0, 0]);
+    img.src = URL.createObjectURL(arquivo);
+  });
 
   // ===================================================================================
   // APOIOS
@@ -89,51 +202,93 @@
     const [cor, nome] = situacoes[a.situacao] || ["neutro", a.situacao];
     const acao = (rotulo, oQue, classe = "fino") =>
       h("button", { class: "bt " + classe, type: "button", onclick: () => acaoNoAnuncio(a, oQue, rotulo) }, rotulo);
-    const periodo = a.inicio ? `De ${data(a.inicio + "T12:00:00")} até ${data(a.fim + "T12:00:00")}` : "Começa quando você ativar";
+    const evento = a.tipo === "evento";
+    const periodo = evento
+      ? `Evento: ${quandoDoEvento(new Date(a.evento_inicio), new Date(a.evento_fim))}${a.inicio ? " · sai do mapa quando terminar" : " · entra no mapa quando você ativar"}`
+      : a.inicio ? `De ${data(a.inicio + "T12:00:00")} até ${data(a.fim + "T12:00:00")}` : "Começa quando você ativar";
+    const pessoas = (p, t) => h("span", { title: `${num(t)} toques no total` }, h("b", {}, num(p)), h("span", { style: "opacity:.7" }, ` (${num(t)})`));
     return h("div", { class: "it" },
       h("div", {},
         h("span", { class: "estado " + cor }, nome), " ",
-        h("b", {}, a.parceiro_nome),
-        h("p", {}, [a.categoria, a.cidade, `${niveis[a.nivel]} · ${a.meses} meses · ${dinheiro(a.valor_mes)}/mês`].filter(Boolean).join(" · ")),
+        evento ? h("span", { class: "estado neutro", style: "color:#FF7EB6" }, "Evento") : "", evento ? " " : "",
+        h("b", {}, evento ? `${a.titulo} · ${a.parceiro_nome}` : a.parceiro_nome),
+        h("p", {}, [a.categoria, a.cidade, evento ? `${niveis[a.nivel]} · ${dinheiro(a.valor_mes)}` : `${niveis[a.nivel]} · ${a.meses} meses · ${dinheiro(a.valor_mes)}/mês`].filter(Boolean).join(" · ")),
         h("div", { class: "meta" }, `${periodo} · ${a.lat == null ? "sem ponto no mapa (não aparece no app)" : "com ponto no mapa"}`),
-        h("div", { class: "meta" },
-          `Abriram o cartão: ${num(a.vistas)} · Ir: ${num(a.toques_ir)} · Ligar: ${num(a.toques_ligar)} · Site: ${num(a.toques_site)} · Recebido: ${dinheiro(a.recebido)}`)),
+        h("div", { class: "meta" }, "Pessoas diferentes (toques): abriram o cartão ", pessoas(a.pessoas_vistas, a.vistas),
+          " · Ir ", pessoas(a.pessoas_ir, a.toques_ir), " · Ligar ", pessoas(a.pessoas_ligar, a.toques_ligar),
+          " · Site ", pessoas(a.pessoas_site, a.toques_site), ` · Recebido: ${dinheiro(a.recebido)}`)),
       h("div", { class: "acoes" },
         h("button", { class: "bt fino", type: "button", onclick: () => formAnuncio(a) }, "Editar"),
         a.status === "rascunho" ? acao("Ativar", "ativar", "azul") : "",
         a.status === "ativo" ? acao("Pausar", "pausar") : "",
         a.status === "pausado" ? acao("Retomar", "retomar", "azul") : "",
-        a.status !== "rascunho" ? acao("Renovar", "renovar", a.situacao === "ativo" ? "fino" : "azul") : "",
+        a.status !== "rascunho" && !evento ? acao("Renovar", "renovar", a.situacao === "ativo" ? "fino" : "azul") : "",
         h("button", { class: "bt fino", type: "button", onclick: () => formRecebimento(a) }, "Recebimento")));
   }
 
   function acaoNoAnuncio(a, oQue, rotulo) {
     const explica = {
-      ativar: `O anúncio entra no mapa agora e vale por ${a.meses} meses a partir de hoje.`,
+      ativar: a.tipo === "evento"
+        ? "O evento entra no mapa agora e sai sozinho quando terminar."
+        : `O anúncio entra no mapa agora e vale por ${a.meses} meses a partir de hoje.`,
       pausar: "O anúncio sai do mapa. Nada se perde, e o prazo continua correndo.",
       retomar: "O anúncio volta para o mapa.",
       renovar: `Soma mais ${a.meses} meses ao fim do anúncio (ou a partir de hoje, se já venceu).`,
     }[oQue];
-    abrir(`${rotulo}: ${a.parceiro_nome}`, h("p", { class: "sub" }, explica), rotulo, async () => {
+    abrir(`${rotulo}: ${a.tipo === "evento" ? a.titulo : a.parceiro_nome}`, h("p", { class: "sub" }, explica), rotulo, async () => {
       await rpc("admin_acao_no_anuncio", { p_id: a.id, p_acao: oQue });
       await apoios();
     });
   }
 
   function formParceiro(p = {}) {
-    const nome = texto(p.nome, { maxlength: "80" }), categoria = texto(p.categoria, { maxlength: "60", placeholder: "Ex.: Rastreamento e segurança" }),
+    const nome = texto(p.nome, { maxlength: "40" }), categoria = texto(p.categoria, { maxlength: "60", placeholder: "Ex.: Rastreamento veicular" }),
       telefone = texto(p.telefone, { maxlength: "30", placeholder: "(55) 0000-0000" }), site = texto(p.site, { maxlength: "200", placeholder: "https://" }),
-      logo = texto(p.logo, { maxlength: "300", placeholder: "https://" }), contato = texto(p.contato, { maxlength: "200" });
+      contato = texto(p.contato, { maxlength: "200" });
+    // A imagem: escolhe no computador; o painel envia ao salvar.
+    let logo = p.logo || "", arquivo = null;
+    const arquivoEl = h("input", { type: "file", accept: "image/png,image/jpeg,image/webp", style: "display:none" });
+    const avisoImg = h("span", { style: "font-weight:400" }, "Quadrada, 512 × 512 px, PNG ou JPG, até 500 KB. Logo centralizado, com margem, que apareça em fundo escuro.");
+    const tirar = h("button", { class: "bt fino", type: "button" }, "Tirar imagem");
+    const previa = previaNoApp();
+    const redesenhar = () => {
+      tirar.style.display = logo || arquivo ? "" : "none";
+      previa.desenhar({ nome: nome.value.trim(), sub: categoria.value.trim(), logo: arquivo ? URL.createObjectURL(arquivo) : logo,
+        beneficio: "10% para motorista de app", horario: "Seg a sex, 8h às 18h" });
+    };
+    arquivoEl.addEventListener("change", async () => {
+      const f = arquivoEl.files[0];
+      if (!f) return;
+      if (f.size > 500 * 1024) {
+        avisoImg.textContent = `Essa imagem tem ${Math.round(f.size / 1024)} KB: o limite é 500 KB.`;
+        avisoImg.style.color = "#FF5A5A";
+        return;
+      }
+      const [l, a] = await medidas(f);
+      arquivo = f;
+      avisoImg.style.color = l !== a || l < 256 ? "#FFC83D" : "";
+      avisoImg.textContent = l !== a ? `Essa imagem tem ${l} × ${a} px: não é quadrada, então as bordas vão ser cortadas. Confira na prévia.`
+        : l < 256 ? `Essa imagem tem ${l} × ${a} px: pode ficar borrada. O ideal é 512 × 512.` : `${l} × ${a} px · ${Math.round(f.size / 1024)} KB. Vai ser enviada ao salvar.`;
+      redesenhar();
+    });
+    tirar.addEventListener("click", () => { logo = ""; arquivo = null; arquivoEl.value = ""; redesenhar(); });
+    for (const el of [nome, categoria]) el.addEventListener("input", redesenhar);
+    redesenhar();
     abrir(p.id ? "Editar parceiro" : "Novo parceiro", [
-      campo("Nome (aparece no app)", nome), campo("Categoria (aparece no app)", categoria),
+      campoContado("Nome (aparece no app)", nome, 20, "Passa do que cabe na linha de cima do mapa (aparece com ...); no cartão aparece inteiro."),
+      campoContado("Categoria (aparece no app)", categoria, 25, "Passa do que cabe no cartão."),
       campo("Telefone (botão Ligar)", telefone), campo("Site (botão Site)", site),
-      campo("Endereço da imagem do logo", logo, "Opcional. Sem logo, o app mostra a primeira letra do nome."),
+      h("label", { style: "display:grid;gap:4px;font-size:12.5px;color:var(--texto3);font-weight:600" }, "Imagem do logo",
+        h("div", { class: "linha" }, h("button", { class: "bt fino", type: "button", onclick: () => arquivoEl.click() }, "Escolher imagem"), tirar, arquivoEl),
+        avisoImg),
+      previa.caixa,
       campo("Contato, só para você", contato, "Não aparece no app."),
     ], "Salvar", async () => {
       if (nome.value.trim().length < 2) throw new Error("Escreva o nome do parceiro.");
+      if (arquivo) logo = await enviarImagem(arquivo);
       await rpc("admin_guardar_parceiro", {
         p_id: p.id ?? null, p_nome: nome.value, p_categoria: categoria.value, p_telefone: telefone.value,
-        p_site: site.value.trim(), p_logo: logo.value.trim(), p_contato: contato.value,
+        p_site: site.value.trim(), p_logo: logo, p_contato: contato.value,
       });
       await apoios();
     });
@@ -150,29 +305,76 @@
     return [lat, lon];
   }
 
+  // "2026-11-28" e "14:00" (horário de Brasília) viram a data e hora certa.
+  const quandoBrasil = (dia, hora) => (dia && hora ? new Date(`${dia}T${hora}:00-03:00`) : null);
+  const diaBrasil = (iso) => (iso ? new Date(iso).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" }) : "");
+  const horaBrasil = (iso) => (iso ? new Date(iso).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false }) : "");
+
   function formAnuncio(a = {}) {
     if (!parceiros.length) return formParceiro();
-    const parceiro = escolha(parceiros.map((p) => [p.id, p.nome]), a.parceiro),
+    const tipo = escolha([["apoio", "Apoio (fica no mapa pelo plano)"], ["evento", "Evento (sai do mapa quando terminar)"]], a.tipo || "apoio"),
+      parceiro = escolha(parceiros.map((p) => [p.id, p.nome]), a.parceiro),
       cidade = escolha(cidades.map((c) => [c.id, `${c.nome}/${c.uf}`]), a.cidade_id),
       nivel = escolha([["apoiador", "Apoiador"], ["destaque", "Destaque (aparece primeiro)"]], a.nivel),
       meses = escolha([[3, "3 meses"], [6, "6 meses"], [12, "12 meses"]], a.meses),
       valor = texto(a.valor_mes != null ? String(a.valor_mes).replace(".", ",") : "50,00", { inputmode: "decimal" }),
       ponto = texto(a.lat != null ? `${a.lat}, ${a.lon}` : "", { placeholder: "-29.6842, -53.8069" }),
-      horario = texto(a.horario, { maxlength: "120", placeholder: "Seg a sex, 8h às 18h" }),
-      beneficio = texto(a.beneficio, { maxlength: "140", placeholder: "Ex.: 10% para motorista de app" });
+      horario = texto(a.horario, { maxlength: "60", placeholder: "Seg a sex, 8h às 18h" }),
+      beneficio = texto(a.beneficio, { maxlength: "80", placeholder: "Ex.: 10% para motorista de app" }),
+      titulo = texto(a.titulo, { maxlength: "40", placeholder: "Ex.: Mutirão de revisão" }),
+      dia = h("input", { type: "date", value: diaBrasil(a.evento_inicio) || hoje(), style: "width:100%" }),
+      comeca = h("input", { type: "time", value: horaBrasil(a.evento_inicio) || "14:00", style: "width:100%" }),
+      termina = h("input", { type: "time", value: horaBrasil(a.evento_fim) || "18:00", style: "width:100%" });
+    const rotuloValor = h("span", {});
+    const soApoio = [campo("Plano", meses), campoContado("Horário de atendimento", horario, 30, "Passa do que cabe no cartão.")];
+    const soEvento = [campoContado("Nome do evento (aparece no app)", titulo, 20, "Passa do que cabe na linha de cima do mapa; no cartão aparece inteiro."),
+      h("div", { class: "linha" }, campo("Dia", dia), campo("Começa", comeca), campo("Termina", termina))];
+    const blocoApoio = h("div", { style: "display:grid;gap:10px" }, ...soApoio);
+    const blocoEvento = h("div", { style: "display:grid;gap:10px" }, ...soEvento);
+    const previa = previaNoApp();
+    // Termina antes de começar: é no dia seguinte (ex.: 22h às 2h).
+    const datas = () => {
+      const i = quandoBrasil(dia.value, comeca.value);
+      let f = quandoBrasil(dia.value, termina.value);
+      if (i && f && f <= i) f = new Date(f.getTime() + 864e5);
+      return [i, f];
+    };
+    const redesenhar = () => {
+      const evento = tipo.value === "evento";
+      blocoApoio.style.display = evento ? "none" : "grid";
+      blocoEvento.style.display = evento ? "grid" : "none";
+      rotuloValor.textContent = evento ? "Valor do evento (R$)" : "Valor por mês (R$)";
+      const p = parceiros.find((x) => String(x.id) === parceiro.value) || {};
+      const [i, f] = datas();
+      previa.desenhar({ evento, nome: p.nome, titulo: titulo.value.trim(), sub: p.categoria, logo: p.logo,
+        quando: i && f ? quandoDoEvento(i, f) : "", beneficio: beneficio.value.trim(), horario: horario.value.trim(),
+        destaque: nivel.value === "destaque" });
+    };
+    for (const el of [tipo, parceiro, nivel, dia, comeca, termina]) el.addEventListener("change", redesenhar);
+    for (const el of [titulo, beneficio, horario]) el.addEventListener("input", redesenhar);
+    redesenhar();
     abrir(a.id ? "Editar anúncio" : "Novo anúncio", [
+      campo("Tipo", tipo),
       campo("Parceiro", parceiro), campo("Colônia", cidade),
-      h("div", { class: "linha" }, campo("Nível", nivel), campo("Plano", meses), campo("Valor por mês (R$)", valor)),
+      h("div", { class: "linha" }, campo("Nível", nivel), campo(rotuloValor, valor)),
+      blocoApoio, blocoEvento,
       campo("Ponto no mapa", ponto, "No Google Maps, clique com o botão direito no lugar e depois nos números: eles são copiados. Cole aqui."),
-      campo("Horário de atendimento", horario),
-      campo("Benefício para a colônia", beneficio, 'Aparece no app como "Para a colônia: ...". Opcional.'),
+      campoContado("Benefício para a colônia", beneficio, 32, "Passa do que cabe na linha de cima do mapa (aparece com ...); no cartão aparece inteiro.",
+        'Aparece no app como "Para a colônia: ...". Opcional.'),
+      previa.caixa,
     ], a.id ? "Salvar" : "Criar rascunho", async () => {
       const [lat, lon] = lerPonto(ponto.value);
       const v = Number(valor.value.trim().replace(/\./g, "").replace(",", "."));
-      if (!(v >= 0)) throw new Error("Confira o valor por mês.");
+      if (!(v >= 0)) throw new Error("Confira o valor.");
+      const evento = tipo.value === "evento";
+      const [i, f] = evento ? datas() : [null, null];
+      if (evento && (!i || !f)) throw new Error(frases.evento_sem_data);
+      if (evento && f <= new Date()) throw new Error(frases.evento_passou);
       await rpc("admin_guardar_anuncio", {
         p_id: a.id ?? null, p_parceiro: +parceiro.value, p_cidade: +cidade.value, p_nivel: nivel.value,
         p_meses: +meses.value, p_valor_mes: v, p_lat: lat, p_lon: lon, p_horario: horario.value, p_beneficio: beneficio.value,
+        p_tipo: tipo.value, p_titulo: evento ? titulo.value : "",
+        p_evento_inicio: i ? i.toISOString() : null, p_evento_fim: f ? f.toISOString() : null,
       });
       await apoios();
     });
