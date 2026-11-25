@@ -96,7 +96,7 @@
   // Prévia de como aparece no app: a linha de cima do mapa e o cartão (cores do app).
   function previaNoApp() {
     const caixa = h("div", { style: "background:#0E1B2E;border-radius:14px;padding:12px;display:grid;gap:10px" });
-    const desenhar = ({ evento, nome, titulo, sub, quando, beneficio, horario, logo, destaque }) => {
+    const desenhar = ({ evento, nome, titulo, sub, quando, beneficio, horario, logo, destaque, telefone, whatsapp, site }) => {
       const cor = evento ? "#FF7EB6" : "#FFD24A";
       const quadrado = (lado, fonte) => {
         const q2 = h("div", { style: `width:${lado}px;height:${lado}px;border-radius:${lado / 4}px;background:#0E1B2E;display:flex;align-items:center;justify-content:center;overflow:hidden;color:${cor};font-weight:800;font-size:${fonte}px;flex:none` });
@@ -125,7 +125,11 @@
           etiqueta(evento ? "Evento" : destaque ? "Apoiador destaque" : "Apoiador")),
         evento ? h("div", { style: "color:#F2F6FB;font-weight:700;font-size:13.5px" }, "🕑 " + (quando || "Dia e hora"))
           : horario ? h("div", { style: "color:#C5D2E3;font-size:13px" }, horario) : "",
-        beneficio ? h("div", { style: "background:#173B33;color:#F2F6FB;border-radius:10px;padding:8px 10px;font-size:13px" }, "🎁 Para a colônia: " + beneficio) : "");
+        beneficio ? h("div", { style: "background:#173B33;color:#F2F6FB;border-radius:10px;padding:8px 10px;font-size:13px" }, "🎁 Para a colônia: " + beneficio) : "",
+        // Os botões: só aparece o que tem para onde ir. Com WhatsApp, ele entra no lugar do Ligar.
+        h("div", { style: "display:flex;gap:6px" }, ...["Ir", String(telefone || "").replace(/\D/g, "").length >= 8 ? (whatsapp ? "WhatsApp" : "Ligar") : "",
+          /^https:\/\/./i.test(String(site || "").trim()) ? "Site" : ""].filter(Boolean).map((b) =>
+          h("div", { style: "flex:1;height:34px;border:2px solid #2A3D57;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#5AB0FF;font-weight:700;font-size:12.5px" }, b))));
       caixa.replaceChildren(
         h("div", { style: "color:#9FB0C6;font-size:11.5px;font-weight:600" }, "Como aparece no app: a linha em cima do mapa"), linha,
         h("div", { style: "color:#9FB0C6;font-size:11.5px;font-weight:600" }, "e o cartão, ao tocar"), cartao);
@@ -193,7 +197,7 @@
         : 'Comece por "Novo parceiro" (a empresa) e depois crie o anúncio dela.')]));
     q("#listaParceiros").replaceChildren(parceiros.length
       ? tabela(["Parceiro", "Categoria", "Telefone", "Site", "Anúncios", ""], parceiros.map((p) => [
-        p.nome, p.categoria || "—", p.telefone || "—", p.site || "—", num(p.anuncios),
+        p.nome, p.categoria || "—", p.telefone ? p.telefone + (p.whatsapp ? " · WhatsApp" : "") : "—", p.site || "—", num(p.anuncios),
         h("button", { class: "bt fino", type: "button", onclick: () => formParceiro(p) }, "Editar")]), [4])
       : h("p", { class: "vazio" }, "Nenhum parceiro cadastrado."));
   }
@@ -203,6 +207,7 @@
     const acao = (rotulo, oQue, classe = "fino") =>
       h("button", { class: "bt " + classe, type: "button", onclick: () => acaoNoAnuncio(a, oQue, rotulo) }, rotulo);
     const evento = a.tipo === "evento";
+    const comWhats = !!(parceiros.find((x) => x.id === a.parceiro) || {}).whatsapp;
     const periodo = evento
       ? `Evento: ${quandoDoEvento(new Date(a.evento_inicio), new Date(a.evento_fim))}${a.inicio ? " · sai do mapa quando terminar" : " · entra no mapa quando você ativar"}`
       : a.inicio ? `De ${data(a.inicio + "T12:00:00")} até ${data(a.fim + "T12:00:00")}` : "Começa quando você ativar";
@@ -215,7 +220,7 @@
         h("p", {}, [a.categoria, a.cidade, evento ? `${niveis[a.nivel]} · ${dinheiro(a.valor_mes)}` : `${niveis[a.nivel]} · ${a.meses} meses · ${dinheiro(a.valor_mes)}/mês`].filter(Boolean).join(" · ")),
         h("div", { class: "meta" }, `${periodo} · ${a.lat == null ? "sem ponto no mapa (não aparece no app)" : "com ponto no mapa"}`),
         h("div", { class: "meta" }, "Pessoas diferentes (toques): abriram o cartão ", pessoas(a.pessoas_vistas, a.vistas),
-          " · Ir ", pessoas(a.pessoas_ir, a.toques_ir), " · Ligar ", pessoas(a.pessoas_ligar, a.toques_ligar),
+          " · Ir ", pessoas(a.pessoas_ir, a.toques_ir), comWhats ? " · WhatsApp " : " · Ligar ", pessoas(a.pessoas_ligar, a.toques_ligar),
           " · Site ", pessoas(a.pessoas_site, a.toques_site), ` · Recebido: ${dinheiro(a.recebido)}`)),
       h("div", { class: "acoes" },
         h("button", { class: "bt fino", type: "button", onclick: () => formAnuncio(a) }, "Editar"),
@@ -245,6 +250,8 @@
     const nome = texto(p.nome, { maxlength: "40" }), categoria = texto(p.categoria, { maxlength: "60", placeholder: "Ex.: Rastreamento veicular" }),
       telefone = texto(p.telefone, { maxlength: "30", placeholder: "(55) 0000-0000" }), site = texto(p.site, { maxlength: "200", placeholder: "https://" }),
       contato = texto(p.contato, { maxlength: "200" });
+    const whats = h("input", { type: "checkbox" });
+    whats.checked = !!p.whatsapp;
     // A imagem: escolhe no computador; o painel envia ao salvar.
     let logo = p.logo || "", arquivo = null;
     const arquivoEl = h("input", { type: "file", accept: "image/png,image/jpeg,image/webp", style: "display:none" });
@@ -254,7 +261,8 @@
     const redesenhar = () => {
       tirar.style.display = logo || arquivo ? "" : "none";
       previa.desenhar({ nome: nome.value.trim(), sub: categoria.value.trim(), logo: arquivo ? URL.createObjectURL(arquivo) : logo,
-        beneficio: "10% para motorista de app", horario: "Seg a sex, 8h às 18h" });
+        beneficio: "10% para motorista de app", horario: "Seg a sex, 8h às 18h",
+        telefone: telefone.value, whatsapp: whats.checked, site: site.value });
     };
     arquivoEl.addEventListener("change", async () => {
       const f = arquivoEl.files[0];
@@ -272,12 +280,16 @@
       redesenhar();
     });
     tirar.addEventListener("click", () => { logo = ""; arquivo = null; arquivoEl.value = ""; redesenhar(); });
-    for (const el of [nome, categoria]) el.addEventListener("input", redesenhar);
+    for (const el of [nome, categoria, telefone, site]) el.addEventListener("input", redesenhar);
+    whats.addEventListener("change", redesenhar);
     redesenhar();
     abrir(p.id ? "Editar parceiro" : "Novo parceiro", [
       campoContado("Nome (aparece no app)", nome, 20, "Passa do que cabe na linha de cima do mapa (aparece com ...); no cartão aparece inteiro."),
       campoContado("Categoria (aparece no app)", categoria, 25, "Passa do que cabe no cartão."),
-      campo("Telefone (botão Ligar)", telefone), campo("Site (botão Site)", site),
+      campo("Telefone (botão Ligar ou WhatsApp)", telefone),
+      h("label", { style: "display:flex;gap:8px;align-items:center;font-size:13px;color:var(--texto2);cursor:pointer;margin-top:-4px" }, whats,
+        "Este número tem WhatsApp (no app aparece o botão WhatsApp no lugar do Ligar)"),
+      campo("Site (botão Site)", site),
       h("label", { style: "display:grid;gap:4px;font-size:12.5px;color:var(--texto3);font-weight:600" }, "Imagem do logo",
         h("div", { class: "linha" }, h("button", { class: "bt fino", type: "button", onclick: () => arquivoEl.click() }, "Escolher imagem"), tirar, arquivoEl),
         avisoImg),
@@ -288,7 +300,7 @@
       if (arquivo) logo = await enviarImagem(arquivo);
       await rpc("admin_guardar_parceiro", {
         p_id: p.id ?? null, p_nome: nome.value, p_categoria: categoria.value, p_telefone: telefone.value,
-        p_site: site.value.trim(), p_logo: logo, p_contato: contato.value,
+        p_site: site.value.trim(), p_logo: logo, p_contato: contato.value, p_whatsapp: whats.checked,
       });
       await apoios();
     });
@@ -347,6 +359,7 @@
       const p = parceiros.find((x) => String(x.id) === parceiro.value) || {};
       const [i, f] = datas();
       previa.desenhar({ evento, nome: p.nome, titulo: titulo.value.trim(), sub: p.categoria, logo: p.logo,
+        telefone: p.telefone, whatsapp: p.whatsapp, site: p.site,
         quando: i && f ? quandoDoEvento(i, f) : "", beneficio: beneficio.value.trim(), horario: horario.value.trim(),
         destaque: nivel.value === "destaque" });
     };
