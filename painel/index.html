@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src https://hcmpksakeaknjmqbbmjp.supabase.co; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src https://hcmpksakeaknjmqbbmjp.supabase.co; img-src 'self' data: blob: https://hcmpksakeaknjmqbbmjp.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'">
 <script>if (top !== self) { try { top.location = self.location; } catch (e) { document.documentElement.style.display = "none"; } }</script>
 <title>Painel VolAnt</title>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -81,7 +81,7 @@
   .segredo { font: 600 12px ui-monospace, monospace; color: var(--texto3); word-break: break-all; text-align: center; }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; place-items: center; z-index: 8; padding: 20px; }
   .modal.on { display: grid; }
-  .modal .caixa { width: min(460px, 100%); background: var(--cartao); border: 1px solid var(--linha2); border-radius: 18px; padding: 20px; display: grid; gap: 10px; }
+  .modal .caixa { width: min(460px, 100%); background: var(--cartao); border: 1px solid var(--linha2); border-radius: 18px; padding: 20px; display: grid; gap: 10px; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; }
   .modal h3 { font: 700 17px Inter; }
   .linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .cap .barra { height: 8px; background: var(--grade); border-radius: 6px; position: relative; margin-top: 8px; } .cap .barra u { position: absolute; inset: 0 auto 0 0; background: var(--azul); border-radius: 6px; min-width: 3px; } .cap .barra s { position: absolute; top: -4px; bottom: -4px; left: 70%; width: 2px; background: var(--serio); }
